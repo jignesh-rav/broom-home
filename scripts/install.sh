@@ -1,5 +1,5 @@
 #!/bin/bash
-# install.sh - put Broom Home on a Mi TV over Wi-Fi ADB (macOS / Linux / Git Bash). Safe to re-run.
+# install.sh - put Broom Home on an Android TV / Google TV over Wi-Fi ADB (macOS / Linux / Git Bash). Safe to re-run.
 #
 #   ./install.sh 192.168.1.50                       install + set up Broom
 #   ./install.sh 192.168.1.50 --debloat             also disable the packages in debloat-list.txt
@@ -53,7 +53,14 @@ echo "Setting Broom as the screensaver and the Home app..."
 sh_ "settings put secure screensaver_components $PKG/.BroomDream"
 sh_ "settings put secure screensaver_enabled 1"
 sh_ "cmd package set-home-activity --user 0 $PKG/.MainActivity"
+# stock home app off so Home goes to Broom (undo.sh brings it back)
+#   Android TV: com.google.android.tvlauncher     Google TV: com.google.android.apps.tv.launcherx
 sh_ "pm disable-user --user 0 com.google.android.tvlauncher" >/dev/null
+if sh_ "pm list packages" | grep -q "package:com.google.android.apps.tv.launcherx"; then
+  echo "Google TV detected: switching off the Google TV home screen (undo.sh turns it back on)."
+  sh_ "pm disable-user --user 0 com.google.android.apps.tv.launcherx" >/dev/null
+  sh_ "cmd package set-home-activity --user 0 $PKG/.MainActivity"
+fi
 
 if [ $DEBLOAT = 1 ]; then
   echo "Disabling packages from debloat-list.txt..."

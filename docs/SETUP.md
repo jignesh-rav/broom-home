@@ -5,7 +5,8 @@
 1. On the TV open **Settings → Device Preferences → About**.
 2. Scroll to **Build** and press OK on it 7 times. You'll see "You are now a developer".
 3. Go back to **Device Preferences → Developer options** and turn **USB debugging** on.
-   On Mi TVs this also opens ADB over the network on port 5555.
+   On most Android TV 9–10 TVs (Mi TVs included) this also opens ADB over the network on port 5555.
+   On Android TV 11+ / Google TV, also turn on **Wireless debugging**, then pair once: `adb pair <ip>:<pairing-port>` (enter the code shown on the TV), and connect with `adb connect <ip>:<port shown>`. Pass that `<ip>:<port>` to the installer as `-Tv`.
 4. Find the TV's IP address: **Settings → Network & Internet → (your Wi-Fi)**. It looks like `192.168.1.50`.
    Tip: reserve this IP for the TV in your router so it doesn't change.
 
@@ -48,7 +49,7 @@ The installer does the following:
 | Location | Weather and Panchang for your area. Rounded to about 1 km and only sent to Open-Meteo. You can type an area instead (Weather → Change area) |
 | Storage | Screensaver photos from a USB stick |
 | `WRITE_SETTINGS`, usage access | Screensaver timer and the "Recently used" row |
-| Accessibility service "Broom button helper" | Sends the remote's Home button to Broom instead of PatchWall. PatchWall stays installed because it owns the input-source pop-up |
+| Accessibility service "Broom button helper" | Shows the pop-ups and the sleep timer. On Xiaomi it also sends PatchWall's extra home screens back to Broom; PatchWall stays installed because it owns the input-source pop-up |
 | Sets Broom as Home and screensaver, disables the stock Android TV launcher | |
 
 ## No computer? Use an Android phone
@@ -74,7 +75,7 @@ You can copy `BroomHome.apk` to a USB stick and install it with the TV's file ma
 - the screensavers, if your TV's Settings has a Screen saver page where you can pick Broom
 
 What you **don't** get without ADB:
-- The Home button and power-on still go to PatchWall
+- The Home button and power-on still go to the TV's own home screen
 - No pop-ups
 - No screensaver timers from inside Broom
 - An empty "Recently used" row
@@ -87,7 +88,7 @@ What you **don't** get without ADB:
 - **Briefing → Watchlist** edits the stock lists with the remote.
 - Long-press OK on an app to add it to or remove it from Favourites, or to move it.
 
-## 5. After a Xiaomi update
+## 5. After a TV system update
 
 Updates sometimes switch the stock launcher back on or reset permissions. Run the installer again. It only fixes what's missing.
 
@@ -118,7 +119,7 @@ adb -s 192.168.1.50:5555 install -r build/BroomHome.apk
 |---|---|
 | `adb connect` times out | TV off or asleep, wrong IP, or USB debugging off. Some routers block devices from seeing each other ("AP isolation"). |
 | `unauthorized` | Accept the prompt on the TV. If it never appeared: Developer options → Revoke USB debugging authorisations, then connect again. |
-| Home button still opens PatchWall | Re-run the installer, which re-enables the button helper. Don't `force-stop` Broom. |
+| Home button still opens the old home screen | Re-run the installer, which re-enables the button helper. Don't `force-stop` Broom. |
 | Weather says "set area" | Weather → Change area, then type your city or area. |
 | Photo screensaver stays on the clock | It needs internet the first time. Some networks block `commons.wikimedia.org`; Broom then falls back to Wikipedia's featured pictures. |
 | Something went wrong | `undo` puts everything back. Reboot the TV afterwards. |

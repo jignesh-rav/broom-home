@@ -1,5 +1,5 @@
-# install.ps1 - put Broom Home on a Mi TV over Wi-Fi ADB and give it the permissions it needs.
-# Safe to run again any time (for example after a Xiaomi update resets something).
+# install.ps1 - put Broom Home on an Android TV / Google TV over Wi-Fi ADB and give it the permissions it needs.
+# Safe to run again any time (for example after a system update resets something).
 #
 #   .\install.ps1 -Tv 192.168.1.50                 # install + set up Broom
 #   .\install.ps1 -Tv 192.168.1.50 -Debloat        # also disable the packages in debloat-list.txt
@@ -72,7 +72,15 @@ Write-Host "Setting Broom as the screensaver and the Home app..."
 Sh "settings put secure screensaver_components $pkg/.BroomDream" | Out-Null
 Sh "settings put secure screensaver_enabled 1" | Out-Null
 Sh "cmd package set-home-activity --user 0 $pkg/.MainActivity" | Out-Null
-Sh "pm disable-user --user 0 com.google.android.tvlauncher" | Out-Null      # stock launcher; undo.ps1 brings it back
+# Switch off the stock home app so Home goes to Broom (undo.ps1 brings it back):
+#   Android TV: com.google.android.tvlauncher     Google TV: com.google.android.apps.tv.launcherx
+$all = Sh "pm list packages"
+Sh "pm disable-user --user 0 com.google.android.tvlauncher" | Out-Null
+if ($all -match "package:com.google.android.apps.tv.launcherx") {
+    Write-Host "Google TV detected: switching off the Google TV home screen (undo.ps1 turns it back on)." -ForegroundColor Yellow
+    Sh "pm disable-user --user 0 com.google.android.apps.tv.launcherx" | Out-Null
+    Sh "cmd package set-home-activity --user 0 $pkg/.MainActivity" | Out-Null
+}
 
 if ($Debloat) {
     Write-Host "Disabling packages from debloat-list.txt..."

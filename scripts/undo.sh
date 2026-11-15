@@ -12,6 +12,7 @@ sh_ "settings delete global private_dns_mode"
 sh_ "settings delete global private_dns_specifier"
 if [ "${2:-}" != "--keep-broom" ]; then
   sh_ "pm enable com.google.android.tvlauncher" >/dev/null
+  sh_ "pm enable com.google.android.apps.tv.launcherx" >/dev/null   # Google TV home
   sh_ "cmd package set-home-activity --user 0 com.google.android.tvlauncher/.MainActivity"
   sh_ "settings put secure screensaver_components com.google.android.backdrop/com.google.android.backdrop.Backdrop"
   REST="$(sh_ "settings get secure enabled_accessibility_services" | tr -d '\r' | tr ':' '\n' | grep -v com.broom.launcher | grep -v '^null$' | paste -sd: -)"

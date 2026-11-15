@@ -16,7 +16,8 @@ If either is missing, walk them through README Step 1 and wait for the IP. Don't
 2. **Connect:** run `adb connect <ip>:5555`, then `adb devices`.
    - `unauthorized`: tell the person to look at the TV and accept "Allow USB debugging?" (tick *Always allow*). Then check again.
    - Time-out or refused: the TV is off or asleep, the IP is wrong, USB debugging is off, or the computer is on a different network. Ask them to check.
-3. **Check the device:** `adb -s <ip>:5555 shell getprop ro.product.model` and `getprop ro.build.version.release`. Broom targets Xiaomi Mi TVs on Android TV 9 (PatchWall). On other Android TVs it usually works, but say that the remote-button helper is Xiaomi-specific.
+   - Android TV 11+ / Google TV often needs **Wireless debugging** instead of port 5555. Ask for the pairing IP:port and code shown on the TV, run `adb pair <ip>:<pair-port> <code>`, then `adb connect <ip>:<port>`. Use that `<ip>:<port>` everywhere below in place of `<ip>:5555`, and pass it to the installer as the TV address.
+3. **Check the device:** `adb -s <ip>:5555 shell getprop ro.product.model` and `getprop ro.build.version.release`. Broom works on Android TV and Google TV (see `docs/COMPATIBILITY.md`). It has only been tested on a Xiaomi Mi TV with Android TV 9, so say that other models are expected to work but are untested. If the device is Fire OS, Tizen, webOS or Roku, stop and explain that it isn't supported. On Google TV, tell the person first that the installer switches off the Google TV home screen (`undo` restores it).
 4. **Run the installer** from `scripts/`. It downloads the latest release APK if there's no local build:
    - Windows: `powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Tv <ip>`
    - macOS / Linux / Git Bash: `bash scripts/install.sh <ip>`

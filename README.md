@@ -1,14 +1,14 @@
 # Broom Home
 
-**A fast, ad-free home screen for old Xiaomi Mi TVs, plus a safe debloat.**
+**A fast, ad-free home screen for Android TV and Google TV, plus a safe debloat. Born on a 1 GB Xiaomi Mi TV.**
 
-Mi TVs from 2018–2021 (Mi TV 4A / 4C / 4X / Horizon, PatchWall on Android TV 9) have only 1 GB of RAM, and the stock home screen fills it with ad rows and telemetry. Broom Home replaces that home screen with something that is light (~0.8 MB APK, ~50 MB RAM, 0% CPU when idle), good-looking and actually useful. A short script switches off the junk packages without touching the remote, HDMI, voice, Chromecast or the Play Store.
+Many smart TVs, especially budget ones from 2018–2022, fill their home screen with ad rows and telemetry, which crawls on 1–2 GB of RAM. Broom Home replaces that home screen with something light (~0.8 MB APK, ~50 MB RAM, 0% CPU when idle), good-looking and actually useful. A short script switches off the junk packages without touching the remote, HDMI, voice, Chromecast or the Play Store.
 
-Nothing here needs root, a PC app or an account. Every change can be undone.
+Nothing here needs root or an account. Every change can be undone.
 
-> Built and tested on a Mi TV 4A/4C Pro 32" (`MiTV-AXSO0`, codename `dangal`, Android TV 9). It should run on most Android TV 9+ boxes and TVs. The remote-button helper is written for Xiaomi PatchWall.
+**Works on:** TVs and boxes running **Android TV** (Xiaomi, Sony, TCL, OnePlus, Philips, Nokia, Vu, Nvidia Shield, Mi Box…) or **Google TV** (Chromecast with Google TV and Google TV sets). **Not for:** Samsung (Tizen), LG (webOS), Roku or Fire TV. Tested so far on a Xiaomi Mi TV 4A/4C Pro (Android TV 9); other devices are expected to work but are untested. The full list, with Google TV notes and the few Xiaomi-only extras, is in **[docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)**.
 
-![Broom Home on a Mi TV, Kerala Backwaters theme](docs/screenshots/01-home-kerala.jpg)
+![Broom Home, Kerala Backwaters theme](docs/screenshots/01-home-kerala.jpg)
 
 **Fastest install:** turn on [ADB over Wi-Fi](#step-1-turn-on-adb-over-wi-fi-on-the-tv), then [ask Claude to do it](#path-a-let-claude-install-it-fastest).
 
@@ -65,7 +65,7 @@ All data comes from free public feeds that need no API keys: Open-Meteo, Yahoo F
 
 ### Why a computer (ADB) is needed once
 
-Broom isn't on the Play Store, so it has to be **side-loaded**, which just means installed from an APK file. Copying the APK to the TV on a USB stick will install it, but on its own it's then just another app you open from the app list. **Xiaomi's PatchWall keeps the Home button.**
+Broom isn't on the Play Store, so it has to be **side-loaded**, which just means installed from an APK file. Copying the APK to the TV on a USB stick will install it, but on its own it's then just another app you open from the app list. **The TV's own home screen (PatchWall, Android TV home or Google TV home) keeps the Home button.**
 
 To make Broom the **real home screen**, these have to be switched on from a computer over ADB:
 - Home button → Broom
@@ -74,7 +74,7 @@ To make Broom the **real home screen**, these have to be switched on from a comp
 - Weather location
 - Screensaver timers
 
-Mi TVs hide the Accessibility settings page that would normally let you do this on the TV. The installer script does all of it in one go. You do it once per TV, and again only if a Xiaomi update undoes it.
+Many TVs (Mi TVs included) hide or restrict the settings that would let you do this on the TV itself. The installer script does all of it in one go. You do it once per TV, and again only if a system update undoes it.
 
 Only Broom is side-loaded. Your other apps (Netflix, YouTube, Hotstar…) stay as they are, and you keep installing apps from the Play Store as usual.
 
@@ -84,7 +84,8 @@ Do this once, with the remote. It lets a computer on your Wi-Fi send setup comma
 
 1. **Connect the TV to the same Wi-Fi** as your computer.
 2. **Unlock Developer options:** open **Settings** (the gear icon on the TV's home screen) → **Device Preferences** → **About** → scroll to **Build** and press **OK 7 times**. You'll see "You are now a developer".
-3. **Turn on debugging:** go Back to **Device Preferences** → **Developer options** → **USB debugging: On** → OK. Despite the name, on Mi TVs (Android TV 9) this also turns on **ADB over Wi-Fi on port 5555**. No cable needed.
+3. **Turn on debugging:** go Back to **Device Preferences** → **Developer options** → **USB debugging: On** → OK. Despite the name, on most Android TV 9–10 TVs (Mi TVs included) this also turns on **ADB over Wi-Fi on port 5555**. No cable needed.
+   On **Android TV 11+ / Google TV**, also turn on **Wireless debugging** in the same menu. It shows an IP, a port and a pairing code; you (or Claude) will need those. Details: [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md#things-that-depend-on-the-tv-not-on-broom).
 4. **Find the TV's IP address:** Settings → **Network & Internet** → select your Wi-Fi network → **IP address**, for example `192.168.1.50`. Write it down.
    Tip: in your router's settings, reserve this IP for the TV so it doesn't change.
 5. Leave the TV **switched on, showing any screen**. The first time a computer connects, the TV asks **"Allow USB debugging?"**. Tick **Always allow from this computer** and press **OK**.
@@ -99,7 +100,7 @@ To turn this off again after setup, set Developer options → USB debugging to O
 2. Open Claude Code in any folder and paste this, with your TV's IP:
 
    ```text
-   Install Broom Home on my Mi TV from https://github.com/jignesh-rav/broom-home
+   Install Broom Home on my <brand and model> TV from https://github.com/jignesh-rav/broom-home
    My TV's IP is 192.168.1.50 and USB debugging is on (Step 1 of the README is done).
    Clone the repo, follow its CLAUDE.md, install adb if it's missing, and run the installer.
    Ask me before debloating or turning on the ad-blocking DNS.
@@ -140,7 +141,7 @@ Then take the tour in **[docs/FEATURES.md](docs/FEATURES.md)**.
 | `-AdBlockDns` | `--adblock-dns` | AdGuard private DNS: blocks ads and trackers for the whole TV |
 | `-Apk path\to.apk` | `APK=path/to.apk ./install.sh …` | Use an APK you already have instead of downloading |
 
-**After a Xiaomi update**, run the same command again. It's safe to repeat and only fixes what's missing.
+**After a TV system update**, run the same command again. It's safe to repeat and only fixes what's missing.
 
 **Undo everything:** `powershell -ExecutionPolicy Bypass -File .\undo.ps1 -Tv 192.168.1.50` (or `./undo.sh 192.168.1.50`), then reboot the TV.
 

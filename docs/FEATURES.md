@@ -95,9 +95,9 @@ Each card shows for about 10 seconds in the bottom-right corner, then fades.
   - latency chart, outages and 24 h uptime
   - Wi-Fi signal and link speed
   - a speed test every 3 hours when the TV is idle, or **Run speed test now**
-- **TV stats & savings**: memory and storage now, the biggest memory users, and all packages. The "before" numbers come from the Mi TV this was built on, for comparison.
+- **TV stats & savings**: memory and storage now, the biggest memory users, and all packages. The "before" numbers come from the Xiaomi Mi TV this was built on, not from your TV.
 
 ## If something goes wrong
 
 - **Home doesn't load:** Broom shows a plain "safe mode" app list instead of a black screen.
-- **The Home button opens PatchWall again** (usually after a Xiaomi update): run the installer again from your computer.
+- **The Home button opens the old home screen again** (usually after a system update): run the installer again from your computer.

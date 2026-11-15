@@ -18,6 +18,7 @@ Sh "settings delete global private_dns_specifier" | Out-Null
 
 if (-not $KeepBroom) {
     Sh "pm enable com.google.android.tvlauncher" | Out-Null
+    Sh "pm enable com.google.android.apps.tv.launcherx" | Out-Null       # Google TV home
     Sh "cmd package set-home-activity --user 0 com.google.android.tvlauncher/.MainActivity" | Out-Null
     Sh "settings put secure screensaver_components com.google.android.backdrop/com.google.android.backdrop.Backdrop" | Out-Null
     $a11y = Sh "settings get secure enabled_accessibility_services"

@@ -1,4 +1,5 @@
-# Packages that are safe to DISABLE on a Xiaomi Mi TV (PatchWall, Android TV 9).
+# Packages that are safe to DISABLE. Written for Xiaomi Mi TVs (PatchWall, Android TV 9);
+# on other TVs, any package that isn't installed is simply skipped.
 # Disabled = switched off, not deleted. `undo` turns every one back on.
 # Delete or comment out (#) any line you want to keep. Packages missing on your TV are skipped.
 #
