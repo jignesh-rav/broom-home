@@ -85,6 +85,7 @@ What you **don't** get without ADB:
 - Press **Home**. If the TV asks, pick **Broom Home → Always**.
 - **Settings** (top-right button) opens Quick settings: Themes, Screensaver, Weather, Features, Sleep timer, sounds, live score pop-ups and the real TV settings.
 - **Settings → Features** switches whole sections on or off: markets, cricket, football, Panchang and each news category.
+- Got a Fire TV, set-top box or console on HDMI? Turn **HDMI-CEC** on (TV and device) so its name shows on the Inputs row and switching on from its remote lands on it. See [FEATURES.md](FEATURES.md#hdmi-devices-and-power-on-hdmi-cec).
 - **Briefing → Watchlist** edits the stock lists with the remote.
 - Long-press OK on an app to add it to or remove it from Favourites, or to move it.
 
@@ -120,6 +121,9 @@ adb -s 192.168.1.50:5555 install -r build/BroomHome.apk
 | `adb connect` times out | TV off or asleep, wrong IP, or USB debugging off. Some routers block devices from seeing each other ("AP isolation"). |
 | `unauthorized` | Accept the prompt on the TV. If it never appeared: Developer options → Revoke USB debugging authorisations, then connect again. |
 | Home button still opens the old home screen | Re-run the installer, which re-enables the button helper. Don't `force-stop` Broom. |
-| Weather says "set area" | Weather → Change area, then type your city or area. |
+| Weather says "set area" or stays on "Finding your location…" | Check Settings → Device Preferences → Location is on (Broom asks the TV for a fresh location). Or Weather → Change area: type an area, a city or `lat, lon`, then pick the right match from the list. |
+| Switching on from the Fire TV / set-top box remote doesn't go to its HDMI input | Turn HDMI-CEC on, on the TV and on the device, and keep Quick settings → Power-on on *Broom (or HDMI device that's on)*. The device's name should show on its HDMI tile. See [FEATURES.md](FEATURES.md#hdmi-devices-and-power-on-hdmi-cec). |
+| An app you switched off is back after a reboot | Some TVs re-enable updated system apps at boot. Ask Claude to remove it for your user instead (`pm uninstall --user 0 <package>`; undo with `cmd package install-existing <package>`). |
+| Slow for a few minutes after boot | Android is recompiling apps after updates (`dex2oat`); it settles by itself. Turn off Play Store → Settings → Auto-update apps so it doesn't recur after every boot, and use standby rather than the wall switch. |
 | Photo screensaver stays on the clock | It needs internet the first time. Some networks block `commons.wikimedia.org`; Broom then falls back to Wikipedia's featured pictures. |
 | Something went wrong | `undo` puts everything back. Reboot the TV afterwards. |

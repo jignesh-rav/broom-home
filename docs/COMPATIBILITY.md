@@ -7,18 +7,19 @@ Broom is an ordinary Android TV home-screen app:
 
 So it isn't tied to Xiaomi. **It runs on any TV or streaming box that runs Android TV or Google TV**, and you set it up the same way: turn on ADB, then run the installer (or ask Claude).
 
-> **Honest status:** it has been tested on **one** TV so far: a Xiaomi Mi TV 4A/4C Pro 32" (`MiTV-AXSO0`, Android TV 9, PatchWall). The groups below are based on what the code depends on. If you try it on another TV, please open an issue saying what worked, so this list can grow.
+> **Honest status:** it has been tested on **two** TVs so far: a Xiaomi Mi TV and a TCL 4K Android TV (both Android TV 9). The groups below are based on what the code depends on. If you try it on another TV, please open an issue saying what worked, so this list can grow.
 
 ## Tested
 | Device | Android | Result |
 |---|---|---|
-| Xiaomi Mi TV 4A / 4C Pro 32" (`dangal`, MiTV-AXSO0) | Android TV 9, PatchWall | Everything works |
+| Xiaomi Mi TV 4A / 4C Pro 32" (`dangal`, MiTV-AXSO0), 1 GB | Android TV 9, PatchWall | Everything works |
+| TCL 4K Android TV, 2018 range (`BeyondTV`, Realtek RTD285O chip), 2 GB | Android TV 9, stock Android TV home | Everything works, including power-on to a Fire TV over HDMI-CEC. Picture / Sound / Display shortcuts show "Not available" (they're Xiaomi-only); use **All settings**. Debloated with a per-model list made by Claude (see below) |
 
 ## Should work: Android TV (untested)
 These run the same Android TV system as the tested TV. Everything should work except the Xiaomi-only extras listed further down.
 - **Xiaomi / Redmi:** Mi TV 4A, 4C, 4X, 4S, Horizon Edition, 5X, P1, Redmi TV on Android TV 9–11, and Mi Box S / Mi TV Stick
 - **Sony** Bravia Android TV (2016–2020)
-- **TCL, iFFalcon, Thomson, Kodak, Blaupunkt, Nokia, Motorola, Vu, Acer, Toshiba** Android TV models (2018 onwards)
+- **TCL** Android TV models other than the tested one (P / C series 2018 onwards), and **iFFalcon, Thomson, Kodak, Blaupunkt, Nokia, Motorola, Vu, Acer, Toshiba** Android TV models (2018 onwards)
 - **OnePlus TV** (Y / U / Q series on Android TV)
 - **Philips** Android TV (2016 onwards)
 - **Streaming boxes:** Nvidia Shield TV, Mi Box S and other Android TV boxes
@@ -46,6 +47,7 @@ These aren't Android TV, so Broom can't be installed as their home screen:
 | Install Broom and make it the default launcher | Installer, one command | **Same:** installer, one command (Google TV home is switched off automatically) |
 | Debloat | `-Debloat` with the ready-made list | **Extra steps with Claude:** it reads your model and lists its packages, you approve, it disables them in batches and saves a per-model undo list. See [DEBLOAT.md](DEBLOAT.md) |
 | Stats page ("before / after") | Mi TV numbers built in | **Extra steps with Claude:** before and after snapshots of *your* TV, then `make_baseline.py`, then rebuild and reinstall the APK (signed with your own key). Optional: without it, the page shows the Mi TV's "before" numbers next to your live ones |
+| HDMI device names, power-on to the device that's on | Works when HDMI-CEC is on | Works when HDMI-CEC is on (see [HDMI-CEC](#hdmi-cec-device-names-and-power-on)) |
 | Everything else (themes, Briefing, Weather, Panchang, screensavers, pop-ups) | Works | Works |
 
 **The order matters:**
@@ -69,6 +71,21 @@ These only do something on Xiaomi PatchWall TVs. Elsewhere they're simply skippe
 | `scripts/debloat-list.txt` (Xiaomi analytics, Mi TV+, Mi apps) | Don't use it; Claude builds a list for your model instead (see above) |
 | Stats page "before" numbers (`launcher/assets/baseline.json`) | Show the Mi TV's numbers until Claude rebuilds them for your TV (see above) |
 | HDMI-CEC device names on the Inputs row | Works on most TVs; depends on the TV maker's HDMI input service |
+
+## HDMI-CEC: device names and power-on
+Broom reads HDMI-CEC through Android's standard TV input service, so it works on any brand whose HDMI inputs report CEC devices (most Android TVs do):
+- the Inputs row shows each plugged-in device's name and whether it's on
+- at power-on, if a device is on (usually because its remote woke the TV), the TV opens that input instead of Broom
+
+CEC is often **off by default**, and every brand names it differently: *HDMI CEC / HDMI control* (Xiaomi, stock Android TV), *T-Link* (TCL), *BRAVIA Sync* (Sony), *EasyLink* (Philips). It needs to be on both on the TV and on the device (Fire TV: Settings → Display & Sounds → HDMI CEC Device Control). Claude can switch it on over ADB, with your yes. User guide: [FEATURES.md](FEATURES.md#hdmi-devices-and-power-on-hdmi-cec).
+
+## Things learned on the TCL (likely on other brands too)
+- **Switched-off packages can come back after a reboot.** On the TCL, `pm disable-user` didn't survive a restart for some system apps that had Play Store updates (Google voice search, the stock home, a few TCL services). For those Claude removes the app for your user instead (`pm uninstall --user 0`). It's still reversible (`cmd package install-existing <package>`), and the factory copy stays on the read-only system partition.
+- **The Play Store can put apps straight back.** An app uninstalled while the Play Store is still working through an update batch gets reinstalled a minute later. Uninstall once Play Store → Manage apps shows no pending updates.
+- **Factory-installed apps can't always be "reinstalled fresh".** If the Play Store's version of a pre-installed app is signed differently (TCL's Prime Video was), it refuses to install over the factory copy. Keep the factory one or remove it for your user.
+- **Weather location on a debloated TV:** with the stock apps gone, nothing else asks Android for the location, so Broom (v14+) asks for a fresh one itself. Location must be on in the TV's settings; otherwise use Weather → Change area.
+- **Slow first boots after a clean-up:** after many apps update or are removed, Android recompiles apps at the next boot or two (`dex2oat`). It settles by itself. Turning off Play Store auto-update keeps later boots fast.
+- **Wall switch vs standby:** many TVs wake from standby in a few seconds but do a full restart after a power cut. Use the remote's power button.
 
 ## Things that depend on the TV, not on Broom
 - **ADB over Wi-Fi:**

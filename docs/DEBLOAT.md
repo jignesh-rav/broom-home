@@ -12,6 +12,8 @@
 > 5. optionally rebuild the Stats page with your TV's own before / after numbers
 >
 > Do this **after** Broom is installed and working as the home screen.
+>
+> On some brands (seen on a TCL) a few disabled system apps switch themselves back on at boot. Claude checks after a reboot and, with your yes, removes those for your user instead (`pm uninstall --user 0`). That's also reversible: `cmd package install-existing <package>`.
 
 `install -Debloat` runs `pm disable-user --user 0 <package>` for every line in [`scripts/debloat-list.txt`](../scripts/debloat-list.txt).
 - A disabled package stays on the TV but never starts. You get back its RAM and background CPU.
@@ -63,7 +65,7 @@ Measured on a 1 GB Mi TV 4A Pro (idle, home screen):
 These keep the TV working:
 - remote and Bluetooth: `com.android.bluetooth`, `com.droidlogic.ble`, `com.google.android.tv.remote.service`, `com.android.inputdevices`
 - HDMI, picture, sound and tuner: everything `com.droidlogic.*`, `mitv.service`, `com.xiaomi.mitv.tvmanager`, `com.android.tv`, `com.android.providers.tv`
-- voice: `com.google.android.katniss`, `com.google.android.speech.pumpkin`
+- voice: `com.google.android.katniss`, `com.google.android.speech.pumpkin` (on a TV whose remote has no microphone, voice search can go, but only if you ask: it uses ~200 MB of RAM, and the Google TV phone app's voice search stops too)
 - Chromecast: `com.google.android.apps.mediashell`
 - core: Play services and the Play Store
 - system updates: `com.xiaomi.mitv.updateservice`

@@ -6,7 +6,7 @@ Many smart TVs, especially budget ones from 2018–2022, fill their home screen 
 
 Nothing here needs root or an account. Every change can be undone.
 
-**Works on:** TVs and boxes running **Android TV** (Xiaomi, Sony, TCL, OnePlus, Philips, Nokia, Vu, Nvidia Shield, Mi Box…) or **Google TV** (Chromecast with Google TV and Google TV sets). **Not for:** Samsung (Tizen), LG (webOS), Roku or Fire TV. Tested so far on a Xiaomi Mi TV 4A/4C Pro (Android TV 9); other devices are expected to work but are untested. The full list, with Google TV notes and the few Xiaomi-only extras, is in **[docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)**.
+**Works on:** TVs and boxes running **Android TV** (Xiaomi, Sony, TCL, OnePlus, Philips, Nokia, Vu, Nvidia Shield, Mi Box…) or **Google TV** (Chromecast with Google TV and Google TV sets). **Not for:** Samsung (Tizen), LG (webOS), Roku or Fire TV. Tested so far on a Xiaomi Mi TV 4A/4C Pro and a TCL 4K Android TV (both Android TV 9); other devices are expected to work but are untested. The full list, with Google TV notes and the few Xiaomi-only extras, is in **[docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)**.
 
 ![Broom Home, Kerala Backwaters theme](docs/screenshots/01-home-kerala.jpg)
 
@@ -18,6 +18,7 @@ Nothing here needs root or an account. Every change can be undone.
 - Big clock, time-of-day greeting (English / हिन्दी / ગુજરાતી), date
 - Weather for your area with feels-like, humidity, wind and an air-quality warning; hourly and 7-day strip
 - Favourites and Recently used rows, HDMI inputs that show the connected device and whether it's on (HDMI-CEC)
+- Smart power-on: switch on from your Fire TV or set-top box remote and the TV lands on that HDMI input; switch on with the TV remote and you get Broom ([how it works](docs/FEATURES.md#hdmi-devices-and-power-on-hdmi-cec))
 - Ticker strip: live India / IPL cricket score, big-club football score, Nifty, Sensex, S&P, Nasdaq, $/₹, gold
 - 15 themes: Auto (dawn / day / dusk / night) and painted scenes (Kerala Backwaters, Desert Fort, Himalayan Peaks, Temple Lamps, Warli Art, Arctic Aurora, Alpine Lake, Canyon Sunset, Film Noir, Neon City, Retro Bollywood…), all drawn in code
 - Festival decorations on the day: Diwali, Navratri, Uttarayan, Holi, Christmas, New Year, Independence / Republic Day and more
@@ -181,7 +182,7 @@ The code is plain Java with no libraries, one file per screen. [docs/CUSTOMISE.m
 No. The bootloader is locked and there are no custom ROMs. The research is in [docs/OS-UPGRADE.md](docs/OS-UPGRADE.md).
 
 ## Safety notes
-- Debloating only *disables* packages (`pm disable-user`). Nothing is deleted, and `undo` re-enables everything.
+- Debloating only *disables* packages (`pm disable-user`). Nothing is deleted, and `undo` re-enables everything. On TVs where a disabled app switches itself back on after a reboot, Claude removes it for your user instead (`pm uninstall --user 0`, undone with `cmd package install-existing`), and only with your yes.
 - Never disable `com.droidlogic.*`, Bluetooth, the remote service, `com.android.tv`, Google Assistant, Play services, Play Store, Chromecast or `com.xiaomi.mitv.updateservice`. The list leaves them alone.
 - Don't `am force-stop com.broom.launcher`. Android then drops the remote-button helper until you re-run the installer or reboot.
 - Market data is delayed and for display only. It is not investment advice.

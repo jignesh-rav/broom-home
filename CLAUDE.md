@@ -26,6 +26,14 @@ If either is missing, walk them through README Step 1 and wait for the IP. Don't
    - `adb -s <ip>:5555 shell settings get secure enabled_accessibility_services` should contain `com.broom.launcher/com.broom.launcher.KeyRemapService`
    - Then ask the person to press **Home** on the remote and confirm they see Broom.
 6. **Point them to the features:** `docs/FEATURES.md`. Mention **Settings → Features** for switching off markets, scores, Panchang or news.
+7. **HDMI devices (optional):** ask whether they have a Fire TV, set-top box or console on HDMI. If so, check CEC with `adb -s <tv> shell settings get global hdmi_control_enabled`. If it's `0`, offer to turn it on (with their yes):
+   ```
+   adb -s <tv> shell settings put global hdmi_control_enabled 1
+   adb -s <tv> shell settings put global hdmi_control_auto_wakeup_enabled 1
+   adb -s <tv> shell settings put global hdmi_control_auto_device_off_enabled 1
+   ```
+   Then ask them to turn CEC on in the device too (Fire TV: Settings → Display & Sounds → HDMI CEC Device Control) and switch it on. `adb -s <tv> shell dumpsys hdmi_control | grep display_name` should list the device. With that, Broom's power-on opens the device's input whenever it's on (`docs/FEATURES.md#hdmi-devices-and-power-on-hdmi-cec`). Fire TV remote volume is set up on the Fire TV (Equipment Control), not over CEC.
+8. **Weather:** if the home screen stays on "Finding your location…", check `adb -s <tv> shell settings get secure location_providers_allowed` contains `network`. Otherwise ask them to use Weather → Change area and pick from the list.
 
 ## Only with the person's explicit yes
 - **Debloat** (`-Debloat` / `--debloat`): this list is for **Xiaomi Mi TVs only**. First show them `scripts/debloat-list.txt` and ask which of the optional ones to keep. Comment those lines out, then run. For any other brand, don't use `-Debloat`; follow "Non-Xiaomi TVs" below.
@@ -65,6 +73,10 @@ Use the normal install steps above, without `-Debloat`, and verify Home goes to 
 4. Write the approved packages to `scripts/debloat-<brand>-<model>.txt` in the same format as `debloat-list.txt`, then disable each one with `adb -s <tv> shell pm disable-user --user 0 <pkg>`. Disable in small batches. After each batch, ask them to check the remote, HDMI inputs and sound still work. If anything breaks, `pm enable` that batch at once.
 5. Undo for this list is `pm enable` for each line. Tell the person to keep the file. `undo.ps1` / `undo.sh` only read `debloat-list.txt`, so point them at the new file instead, or run the `pm enable` lines yourself.
 6. Uninstalling instead of disabling is only for apps the person installed themselves, and only with their yes.
+7. **After the first reboot, check the disables stuck:** `adb -s <tv> shell pm list packages -d`. On some brands (seen on a TCL) system apps that have Play Store updates are switched back on at boot. For those, with the person's yes, remove them for the user instead: `pm uninstall --user 0 <pkg>` (undo: `cmd package install-existing <pkg>`). Note them in the per-model file. To free storage too, run `pm uninstall <pkg>` first (drops the Play update, back to the factory copy), then `pm uninstall --user 0 <pkg>` (drops the data).
+8. **Don't uninstall while the Play Store is updating.** An app removed while Play is still working through an update batch is reinstalled a minute later. Check `adb -s <tv> shell logcat -d | grep "IQ: There are 0 installs pending"` or ask the person to look at Play Store → Manage apps → Updates.
+9. **Replacing the stock home on Google TV / Android TV:** if the stock home comes back after a reboot even though it was disabled, remove it for the user the same way. Broom stays the default Home, and the TV's own fallback home is still there if Broom is ever uninstalled. `undo` re-enables the stock home; after a user-removal, run `cmd package install-existing <pkg>` first.
+10. **Voice search** (`com.google.android.katniss`) uses ~200 MB of RAM. Only offer to remove it when the remote has no microphone (an IR remote: `dumpsys bluetooth_manager` shows no bonded remote), and say that voice search from the Google TV phone app stops too.
 
 ### 4. Take an "after" snapshot and rebuild the Stats page
 1. Wait a minute or two for the TV to settle on the Broom home screen, then repeat step 1 into `snapshots/<model>-after/`.
@@ -81,7 +93,9 @@ Use the normal install steps above, without `-Debloat`, and verify Home goes to 
 ## Never do
 - Never disable or uninstall the packages that keep the TV working:
   - `com.droidlogic.*`, `com.android.bluetooth`, `com.google.android.tv.remote.service`, `com.android.tv`, `com.android.providers.tv`
-  - `com.google.android.katniss`, `com.google.android.gms`, `com.android.vending`, `com.google.android.apps.mediashell`
+  - `com.google.android.gms`, `com.android.vending`, `com.google.android.apps.mediashell`
+  - `com.google.android.katniss` (voice), unless the person asks for it on a TV without a microphone remote (see step 10 above)
+  - on other brands, the vendor's TV / input / HDMI / remote services, e.g. on TCL `com.tcl.tv`, `com.tcl.tvinput`, `com.tcl.framework.custom`, `com.tcl.keycustomfunctionservice`, `com.tcl.tcl_bt_rcu_service`, `com.tcl.settings`, and the `sitatvservice` process
   - `com.xiaomi.mitv.updateservice`, `com.mitv.tvhome.atv` (PatchWall owns the input-source pop-up)
   - anything that isn't in `scripts/debloat-list.txt` or in a per-model list the person approved (see above)
 - Never run `am force-stop com.broom.launcher`. Android then drops Broom's accessibility service until a reboot or a re-run of the installer.

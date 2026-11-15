@@ -15,7 +15,7 @@ Everything works with the arrow keys, **OK**, **Back** and **Home**. No mouse or
 | Favourites | Your apps in your order. **Long-press OK** on any app: Move left / right, Remove from / Add to Favourites |
 | Recently used | Apps you opened most recently |
 | Forecast strip | The next 8 hours and 7 days |
-| Inputs | HDMI 1–3, AV and Live TV. Each HDMI tile shows the connected device (via HDMI-CEC), green when it's on and amber on standby |
+| Inputs | HDMI 1–3, AV and Live TV. Each HDMI tile shows the connected device (via HDMI-CEC), green when it's on and amber on standby. See [HDMI devices and power-on](#hdmi-devices-and-power-on-hdmi-cec) |
 | App rows (scroll down) | Every installed app, grouped: Streaming, Music & Audio, Media & Files and so on |
 
 **Home** on the remote always brings you back here, from any app or HDMI input.
@@ -26,7 +26,7 @@ The **Settings** button opens a list:
 - TV settings: Picture & TV options, Sound, Display, Wi-Fi & network, Apps, All settings
 - Broom screens: Themes, Weather, Screensaver, Briefing, Watchlist & market alerts, Network monitor, TV stats & savings
 - **Broom sounds** on / off: the tick and click as you move around
-- **Power-on** switch: open Broom when the TV turns on, or go straight back to the last input. In Broom mode, if an HDMI device such as a Fire TV or set-top box is switched on (seen over HDMI-CEC), the TV opens that input instead, so switching on from the Fire TV remote lands on the Fire TV
+- **Power-on** switch: *Broom (or HDMI device that's on)* opens Broom when the TV turns on, unless an HDMI device such as a Fire TV or set-top box is on, in which case it opens that input (see [HDMI devices and power-on](#hdmi-devices-and-power-on-hdmi-cec)). *Last input* goes straight back to whatever was on before
 - **Live score pop-ups** on / off
 - **Sleep timer**: 15 min to 2 h, with a 1-minute warning. Any key cancels it
 - **Features: choose what to show**: tick boxes for Markets, Cricket scores, Football scores, Panchang, and each news category (Cricket, Football, Tech, AI, Space, Market news). Anything you untick is not downloaded and disappears from home, Briefing, the screensaver and pop-ups.
@@ -80,6 +80,32 @@ All of it is calculated on the TV, so it works offline.
 
 Photo packs download featured pictures from Wikimedia, with a family-friendly filter, a credit on screen and a 50 MB cache. For **My photos (USB)**, plug in a stick with JPGs.
 
+## HDMI devices and power-on (HDMI-CEC)
+
+Broom uses HDMI-CEC, the standard that lets the TV and plugged-in devices talk over the HDMI cable, for two things:
+
+- **Inputs row:** each HDMI tile shows the name of the device plugged in (for example "Amazon FireTV", a set-top box or a console), green when it's on and amber on standby. OK opens that input.
+- **Power-on goes to the device that's on:** when the TV switches on, Broom waits a few seconds and checks the HDMI devices. If one is on, the TV opens its input instead of Broom. Broom checks several times in the first 20 seconds, because after a full restart the TV takes a while to list its devices. If none is on, Broom opens as usual (or the morning Briefing).
+
+What that means day to day:
+
+| You switch on with… | You land on |
+|---|---|
+| The Fire TV / set-top box remote (the device wakes the TV) | That device's HDMI input |
+| The TV remote, with the device in standby | Broom Home |
+| The TV remote, with the device left on | That device's HDMI input |
+
+It also covers a common TV quirk: the device sends "switch to me" while the TV is still starting up, the TV misses it and stays on its home screen.
+
+**To make it work:**
+1. **On the TV:** turn HDMI-CEC on. It has a different name on each brand: *HDMI CEC* or *HDMI control* (Xiaomi, stock Android TV), *T-Link* (TCL), *BRAVIA Sync* (Sony), *EasyLink* (Philips). It's usually under Settings → Inputs or Device Preferences. Turn on "auto power on" / "auto device off" too if there are such options. Claude can also turn it on over ADB (see `CLAUDE.md`).
+2. **On the device:** turn CEC on there as well. On a Fire TV: Settings → Display & Sounds → **HDMI CEC Device Control**.
+3. Check: the device's name should appear on its HDMI tile in Broom's Inputs row.
+
+**Don't want it?** Quick settings → **Power-on** switches between *Broom (or HDMI device that's on)* and *Last input*.
+
+**Volume from a Fire TV remote** isn't sent over CEC to TV speakers. Set it up on the Fire TV instead: Settings → Equipment Control → Manage Equipment → add your TV. It needs a genuine Alexa Voice Remote with volume buttons; some third-party replacement remotes look identical but aren't accepted.
+
 ## Pop-ups (over any app or HDMI input)
 
 - **Cricket**: when an India / IPL match goes live, each wicket, and every 50 runs
@@ -95,9 +121,11 @@ Each card shows for about 10 seconds in the bottom-right corner, then fades.
   - latency chart, outages and 24 h uptime
   - Wi-Fi signal and link speed
   - a speed test every 3 hours when the TV is idle, or **Run speed test now**
-- **TV stats & savings**: memory and storage now, the biggest memory users, and all packages. The "before" numbers come from the Xiaomi Mi TV this was built on, not from your TV.
+- **TV stats & savings**: memory and storage now, the biggest memory users, and all packages. The "before" numbers come from the Xiaomi Mi TV this was built on, not from your TV, unless Claude has rebuilt the page for your TV (see [COMPATIBILITY.md](COMPATIBILITY.md#on-non-xiaomi-tvs-whats-the-same-and-what-needs-extra-steps)).
 
 ## If something goes wrong
 
 - **Home doesn't load:** Broom shows a plain "safe mode" app list instead of a black screen.
 - **The Home button opens the old home screen again** (usually after a system update): run the installer again from your computer.
+- **Weather says "Finding your location…"** for more than a minute: check Settings → Device Preferences → Location is on, or use Weather → **Change area** and pick your area from the list.
+- **Switching on from the Fire TV / set-top box remote stays on Broom:** HDMI-CEC is off on the TV or on the device. See [HDMI devices and power-on](#hdmi-devices-and-power-on-hdmi-cec).
