@@ -42,8 +42,32 @@ public class DreamView extends FrameLayout {
             "Cubs, calves, kittens, ducklings… (Wikimedia Commons).",
             "Nebulae, galaxies, the Moon and auroras (Wikimedia Commons).",
             "Photos from a USB drive plugged into the TV.",
-            "Changes between the animated styles every 10 minutes."};
-    private static final int ANIMATED = 4; // first N modes used by shuffle
+            "A new style every 10 minutes: animations, quotes and all photo packs, each shown once before any repeats."};
+    private static final int ANIMATED = 4; // first N modes are the animated ones
+
+    /** Styles Shuffle rotates through: animations, quotes and every online photo pack. */
+    private static final String[] SHUFFLE_POOL = {"nebula", "aurora", "warp", "mandala", "quotes",
+            "photo:monuments", "photo:nature", "photo:animals", "photo:baby", "photo:space"};
+
+    /**
+     * Shuffle bag kept in prefs across screensaver sessions: every style is shown once (in random order)
+     * before any repeats, and the next round never starts with the style just shown.
+     */
+    static synchronized String nextShuffle(Context c, String last) {
+        android.content.SharedPreferences sp = Theme.prefs(c);
+        java.util.List<String> bag = new java.util.ArrayList<>();
+        for (String x : sp.getString("shuffle_bag", "").split(","))
+            if (java.util.Arrays.asList(SHUFFLE_POOL).contains(x)) bag.add(x);
+        if (bag.isEmpty()) {
+            bag.addAll(java.util.Arrays.asList(SHUFFLE_POOL));
+            java.util.Collections.shuffle(bag);
+            String prev = last != null ? last : sp.getString("shuffle_last", "");
+            if (bag.size() > 1 && bag.get(0).equals(prev)) java.util.Collections.swap(bag, 0, bag.size() - 1);
+        }
+        String next = bag.remove(0);
+        sp.edit().putString("shuffle_bag", android.text.TextUtils.join(",", bag)).putString("shuffle_last", next).apply();
+        return next;
+    }
 
     private final String mode;
     private String active;
@@ -91,7 +115,7 @@ public class DreamView extends FrameLayout {
         super(c);
         this.mode = mode;
         this.theme = Theme.current(c);
-        String a = mode.equals("shuffle") ? MODES[rnd.nextInt(ANIMATED)] : mode;
+        String a = mode.equals("shuffle") ? nextShuffle(c, null) : mode;
         // a switched-off feature falls back to the clock
         if ((a.equals("panchang") && !Features.on(c, Features.PANCHANG)) || (a.equals("briefing") && !Features.anyBriefing(c))) a = "clock";
         this.active = a;
@@ -120,22 +144,45 @@ public class DreamView extends FrameLayout {
         if (active.startsWith("photo:")) startPhotos(c, active.substring(6));
     }
 
+    /** Shuffle: change style in place (quotes layer and photo loader follow the new style). */
+    private void switchTo(String next) {
+        if (!running) return;
+        photoGen++;
+        if (loader != null) { loader.interrupt(); loader = null; }
+        photo = null; photoItem = null;   // bitmaps left to GC: the old loader may still be drawing with them
+        prevPhoto = null;
+        if (quote != null) { removeView(quote); quote = null; }
+        active = next;
+        if (next.equals("quotes")) {
+            quote = new QuoteView(getContext());
+            if (briefOn) quote.setAlpha(0f);
+            addView(quote, 1, new LayoutParams(-1, -1));
+        }
+        if (next.startsWith("photo:")) startPhotos(getContext(), next.substring(6));
+        txt.invalidate();
+    }
+
+    private volatile int photoGen;
+
     private void startPhotos(final Context c, final String pack) {
+        final int gen = photoGen;
         loader = new Thread(new Runnable() {
+            private boolean live() { return running && gen == photoGen; }
             @Override public void run() {
                 java.util.List<Photos.Item> items = Photos.list(c, pack);
                 // no list yet (offline / source busy): keep trying every minute instead of showing "Loading" forever
-                while (running && items.isEmpty() && !pack.equals("usb")) {
+                while (live() && items.isEmpty() && !pack.equals("usb")) {
                     try { Thread.sleep(60000); } catch (InterruptedException e) { return; }
-                    if (running) items = Photos.list(c, pack);
+                    if (live()) items = Photos.list(c, pack);
                 }
                 int i = 0;
-                while (running && !items.isEmpty()) {
+                while (live() && !items.isEmpty()) {
                     Photos.Item it = items.get(i % items.size());
                     i++;
                     int w = Math.max(1280, getWidth()), h = Math.max(720, getHeight());
                     Bitmap b = Photos.load(c, it, w, h);
                     if (b == null) { if (i > items.size() * 2) break; continue; }
+                    if (!live()) { b.recycle(); return; }
                     Bitmap old = prevPhoto;
                     prevPhoto = photo;
                     photo = b;
@@ -183,10 +230,8 @@ public class DreamView extends FrameLayout {
             long now = System.currentTimeMillis();
             if (mode.equals("shuffle") && now - switched > 10 * 60 * 1000) {
                 switched = now;
-                String next;
-                do { next = MODES[rnd.nextInt(ANIMATED)]; } while (next.equals(active));
-                active = next;
-                txt.invalidate();
+                final String next = nextShuffle(getContext(), active);
+                DreamView.this.post(new Runnable() { @Override public void run() { switchTo(next); } });
             }
             int w = getWidth(), h = getHeight();
             switch (active) {
@@ -530,7 +575,8 @@ public class DreamView extends FrameLayout {
         private boolean pageOn(int p) {
             Context c = getContext();
             switch (p) {
-                case 0: case 1: case 2: return Features.on(c, Features.MARKETS);
+                // market pages only while an Indian or US market is trading; otherwise just scores and news
+                case 0: case 1: case 2: return Features.on(c, Features.MARKETS) && Briefing.marketsOpen();
                 case 3: return Features.on(c, Features.CRICKET) || Features.news(c, "cricket");
                 case 4: return Features.news(c, "football") || Features.news(c, "ai");
                 case 5: return Features.news(c, "space") || Features.news(c, "markets");
@@ -711,6 +757,8 @@ public class DreamView extends FrameLayout {
             java.util.Collections.shuffle(items);
             postDelayed(next, 40000);
         }
+
+        @Override protected void onDetachedFromWindow() { super.onDetachedFromWindow(); removeCallbacks(next); }
 
         @Override protected void onDraw(Canvas c) {
             if (items.isEmpty()) return;

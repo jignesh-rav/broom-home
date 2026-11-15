@@ -72,10 +72,10 @@ All of it is calculated on the TV, so it works offline.
 ## Screensaver
 
 **Screensaver** button:
-- **Style**: Nebula Drift, Aurora, Warp Speed, Rangoli Mandala, Minimal Clock, Facts & Quotes, Briefing, Panchang, photo packs (Monuments, Nature, Animals, Baby animals, Space), My photos (USB) or Shuffle. **Preview** shows any style straight away
+- **Style**: Nebula Drift, Aurora, Warp Speed, Rangoli Mandala, Minimal Clock, Facts & Quotes, Briefing, Panchang, photo packs (Monuments, Nature, Animals, Baby animals, Space), My photos (USB) or **Shuffle**. Shuffle changes style every 10 minutes and goes through all of them (the animations, Facts & Quotes and every photo pack) once each, in random order, before any repeats. **Preview** shows any style straight away
 - **Start screensaver after**: how long with no remote activity
 - **Turn TV off after**: a power saver while the screensaver is running
-- **Briefing inside every screensaver**: every few minutes, swap to a market, score and news page, then back
+- **Briefing inside every screensaver**: every few minutes, swap to a market, score and news page, then back. Market pages only appear while a market is trading (Asia, India, Europe, or the US session in Indian evening hours, on weekdays). The rest of the time you see only scores and news
 - **Night power saving**: from midnight to 6 AM, only the Minimal Clock, without the Briefing pages
 
 Photo packs download featured pictures from Wikimedia, with a family-friendly filter, a credit on screen and a 50 MB cache. For **My photos (USB)**, plug in a stick with JPGs.
