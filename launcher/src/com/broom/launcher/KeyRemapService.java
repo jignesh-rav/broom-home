@@ -71,7 +71,8 @@ public class KeyRemapService extends AccessibilityService {
     };
     private final Runnable forceHome = new Runnable() {
         @Override public void run() {
-            if (!powerOnHome(KeyRemapService.this)) return;
+            if (!powerOnHome(KeyRemapService.this) || onHdmi) return;
+            if (openWokenDevice()) return;
             android.util.Log.i("Broom", "power-on: opening Broom Home (last=" + lastPkg + ")");
             if (morningBriefing()) return;
             goHome();
@@ -80,17 +81,51 @@ public class KeyRemapService extends AccessibilityService {
     /** Live TV sometimes starts a few seconds late; bounce it once more if it took over. */
     private final Runnable recheck = new Runnable() {
         @Override public void run() {
-            if (powerOnHome(KeyRemapService.this) && "com.android.tv".equals(lastPkg)) {
+            if (!powerOnHome(KeyRemapService.this) || onHdmi) return;
+            if (openWokenDevice()) return;
+            if ("com.android.tv".equals(lastPkg)) {
                 android.util.Log.i("Broom", "power-on: Live TV took over, reopening Broom");
                 goHome();
             }
         }
     };
+    /** Set once this power-on switched to an HDMI device, so nothing bounces it back to Broom. */
+    private boolean onHdmi;
     private void powerOn() {
+        onHdmi = false;
         h.removeCallbacks(forceHome); h.removeCallbacks(recheck);
         h.postDelayed(forceHome, 2500);
         h.postDelayed(recheck, 7000);
         h.postDelayed(recheck, 12000);
+        h.postDelayed(recheck, 20000);   // after a cold boot the HDMI-CEC device list takes a while to fill in
+    }
+
+    static boolean powerOnDevice(Context c) { return Theme.prefs(c).getBoolean("power_on_device", true); }
+
+    /**
+     * Power-on helper: if an HDMI-CEC device (Fire TV, set-top box…) is switched on, it is almost
+     * always what turned the TV on, so open its HDMI input instead of Broom. Its own "switch to me"
+     * message is often lost while the TV is still starting up.
+     */
+    private boolean openWokenDevice() {
+        if (!powerOnDevice(this)) return false;
+        try {
+            android.media.tv.TvInputManager tim = (android.media.tv.TvInputManager) getSystemService(Context.TV_INPUT_SERVICE);
+            if (tim == null) return false;
+            for (android.media.tv.TvInputInfo in : tim.getTvInputList()) {
+                String parent = in.getParentId();
+                if (parent == null) continue;   // CEC devices are child inputs of their HDMI port
+                int st = tim.getInputState(in.getId());
+                if (st != android.media.tv.TvInputManager.INPUT_STATE_CONNECTED) continue;
+                android.util.Log.i("Broom", "power-on: " + in.loadLabel(this) + " is on, opening " + parent);
+                Intent i = new Intent(Intent.ACTION_VIEW, android.media.tv.TvContract.buildChannelUriForPassthroughInput(parent));
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(i);
+                onHdmi = true;
+                return true;
+            }
+        } catch (Exception e) { android.util.Log.w("Broom", "power-on: HDMI check failed", e); }
+        return false;
     }
     private final BroadcastReceiver screenOn = new BroadcastReceiver() {
         @Override public void onReceive(Context c, Intent i) { powerOn(); }

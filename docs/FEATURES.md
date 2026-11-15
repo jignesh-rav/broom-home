@@ -26,7 +26,7 @@ The **Settings** button opens a list:
 - TV settings: Picture & TV options, Sound, Display, Wi-Fi & network, Apps, All settings
 - Broom screens: Themes, Weather, Screensaver, Briefing, Watchlist & market alerts, Network monitor, TV stats & savings
 - **Broom sounds** on / off: the tick and click as you move around
-- **Power-on** switch: open Broom when the TV turns on, or go straight back to the last input (handy if you mostly use a Fire TV / set-top box on HDMI)
+- **Power-on** switch: open Broom when the TV turns on, or go straight back to the last input. In Broom mode, if an HDMI device such as a Fire TV or set-top box is switched on (seen over HDMI-CEC), the TV opens that input instead, so switching on from the Fire TV remote lands on the Fire TV
 - **Live score pop-ups** on / off
 - **Sleep timer**: 15 min to 2 h, with a 1-minute warning. Any key cancels it
 - **Features: choose what to show**: tick boxes for Markets, Cricket scores, Football scores, Panchang, and each news category (Cricket, Football, Tech, AI, Space, Market news). Anything you untick is not downloaded and disappears from home, Briefing, the screensaver and pop-ups.

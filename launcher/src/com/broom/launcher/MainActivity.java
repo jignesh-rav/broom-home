@@ -305,7 +305,7 @@ public class MainActivity extends Activity {
     }
 
     private String powerLabel() {
-        return KeyRemapService.powerOnHome(this) ? "Power-on: Broom" : "Power-on: Last input";
+        return KeyRemapService.powerOnHome(this) ? "Power-on: Broom (or HDMI device that's on)" : "Power-on: Last input";
     }
 
     private void addBtn(LinearLayout parent, String label, String tag, final Intent i) {
@@ -899,7 +899,7 @@ public class MainActivity extends Activity {
                             case 11: {
                                 boolean now = !KeyRemapService.powerOnHome(MainActivity.this);
                                 Theme.prefs(MainActivity.this).edit().putBoolean("power_on_home", now).apply();
-                                Toast.makeText(MainActivity.this, now ? "TV will open Broom Home when switched on"
+                                Toast.makeText(MainActivity.this, now ? "TV will open Broom Home when switched on, or the HDMI device (e.g. Fire TV) if it is on"
                                         : "TV will open the last input (e.g. Fire TV on HDMI) when switched on", Toast.LENGTH_LONG).show();
                                 return;
                             }
