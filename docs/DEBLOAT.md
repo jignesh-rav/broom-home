@@ -1,5 +1,18 @@
 # Debloat: what gets switched off and why
 
+> **This list is for Xiaomi Mi TVs.** Other brands (Sony, TCL, OnePlus, Philips, Google TV…) have their own bloat with different package names. Don't use `-Debloat` there. Instead, ask Claude:
+>
+> *"Debloat my &lt;brand and model&gt; TV at &lt;IP&gt;. Follow the Non-Xiaomi TVs section of CLAUDE.md."*
+>
+> Claude will:
+> 1. take a before snapshot of the TV
+> 2. list every package on your model, sorted into junk / caution / keep
+> 3. disable only what you approve, in small batches, checking the remote, HDMI and sound after each batch
+> 4. save a per-model list (`scripts/debloat-<brand>-<model>.txt`) so it can be undone
+> 5. optionally rebuild the Stats page with your TV's own before / after numbers
+>
+> Do this **after** Broom is installed and working as the home screen.
+
 `install -Debloat` runs `pm disable-user --user 0 <package>` for every line in [`scripts/debloat-list.txt`](../scripts/debloat-list.txt).
 - A disabled package stays on the TV but never starts. You get back its RAM and background CPU.
 - `undo` runs `pm enable` on the same list.

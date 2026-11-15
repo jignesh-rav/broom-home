@@ -110,6 +110,14 @@ To turn this off again after setup, set Developer options → USB debugging to O
 
 Claude follows [`CLAUDE.md`](CLAUDE.md), which spells out the steps, the checks to run afterwards and what it must never touch. You can also ask it for more afterwards, for example "debloat my TV but keep Mi screen mirroring", "undo everything", "switch off the markets feature", or "change the watchlist to US stocks only and rebuild".
 
+**Not a Xiaomi TV?** Installing Broom and making it the default launcher works the same way. Debloating and the Stats page's "before / after" numbers take a few extra steps, which Claude handles once Broom is in:
+1. It snapshots your TV before any change.
+2. It lists your model's packages, sorted into junk / caution / keep, and disables only what you approve.
+3. It snapshots again afterwards.
+4. It rebuilds the Stats page with your TV's numbers.
+
+Ask: *"…then help me debloat my &lt;brand and model&gt; TV and update the Stats page for it."* Details: [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md#on-non-xiaomi-tvs-whats-the-same-and-what-needs-extra-steps).
+
 ### Path B: run the installer yourself (no build)
 
 1. Do [Step 1](#step-1-turn-on-adb-over-wi-fi-on-the-tv) on the TV.
@@ -137,7 +145,7 @@ Then take the tour in **[docs/FEATURES.md](docs/FEATURES.md)**.
 
 | Windows | macOS / Linux | What it does |
 |---|---|---|
-| `-Debloat` | `--debloat` | Disables the packages in [`scripts/debloat-list.txt`](scripts/debloat-list.txt): telemetry, ad rows, and services a TV doesn't need. Edit the list first; each one is explained in [docs/DEBLOAT.md](docs/DEBLOAT.md) |
+| `-Debloat` | `--debloat` | **Xiaomi Mi TVs only** (other brands: use Path A and ask Claude). Disables the packages in [`scripts/debloat-list.txt`](scripts/debloat-list.txt): telemetry, ad rows, and services a TV doesn't need. Edit the list first; each one is explained in [docs/DEBLOAT.md](docs/DEBLOAT.md) |
 | `-AdBlockDns` | `--adblock-dns` | AdGuard private DNS: blocks ads and trackers for the whole TV |
 | `-Apk path\to.apk` | `APK=path/to.apk ./install.sh …` | Use an APK you already have instead of downloading |
 

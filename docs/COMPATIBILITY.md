@@ -39,6 +39,26 @@ These aren't Android TV, so Broom can't be installed as their home screen:
 - **Very old Xiaomi TVs that run PatchWall without Android TV** (some early Mi TV 4 / 4A firmware without the Google Play Store)
 - TVs older than Android TV 5.0
 
+## On non-Xiaomi TVs: what's the same and what needs extra steps
+
+| | Xiaomi Mi TV | Any other Android TV / Google TV |
+|---|---|---|
+| Install Broom and make it the default launcher | Installer, one command | **Same:** installer, one command (Google TV home is switched off automatically) |
+| Debloat | `-Debloat` with the ready-made list | **Extra steps with Claude:** it reads your model and lists its packages, you approve, it disables them in batches and saves a per-model undo list. See [DEBLOAT.md](DEBLOAT.md) |
+| Stats page ("before / after") | Mi TV numbers built in | **Extra steps with Claude:** before and after snapshots of *your* TV, then `make_baseline.py`, then rebuild and reinstall the APK (signed with your own key). Optional: without it, the page shows the Mi TV's "before" numbers next to your live ones |
+| Everything else (themes, Briefing, Weather, Panchang, screensavers, pop-ups) | Works | Works |
+
+**The order matters:**
+1. Before snapshot
+2. Install Broom and make it the default launcher
+3. Debloat, approved in batches
+4. After snapshot
+5. Rebuild the Stats page
+
+Claude follows this order from [`CLAUDE.md`](../CLAUDE.md#non-xiaomi-tvs-debloat-and-the-stats-page-take-extra-steps). Easiest prompt:
+
+> *"Install Broom Home from https://github.com/jignesh-rav/broom-home on my &lt;brand and model&gt; TV at &lt;IP&gt;, make it the default launcher, then help me debloat it and update the Stats page for my TV. Ask before disabling anything."*
+
 ## Xiaomi-only extras
 These only do something on Xiaomi PatchWall TVs. Elsewhere they're simply skipped, and nothing breaks.
 
@@ -46,7 +66,8 @@ These only do something on Xiaomi PatchWall TVs. Elsewhere they're simply skippe
 |---|---|
 | Sending PatchWall's own home screens (Mi button, wake-up) back to Broom | Not needed: the installer sets Broom as the Home app |
 | Quick settings → Picture & TV options / Sound / Display (Amlogic TV settings shortcuts) | Shows "Not available on this TV". Use **All settings** instead |
-| Most of `scripts/debloat-list.txt` (Xiaomi analytics, Mi TV+, Mi apps) | Packages that aren't on the TV are skipped. Google's telemetry and recommendation entries still apply |
+| `scripts/debloat-list.txt` (Xiaomi analytics, Mi TV+, Mi apps) | Don't use it; Claude builds a list for your model instead (see above) |
+| Stats page "before" numbers (`launcher/assets/baseline.json`) | Show the Mi TV's numbers until Claude rebuilds them for your TV (see above) |
 | HDMI-CEC device names on the Inputs row | Works on most TVs; depends on the TV maker's HDMI input service |
 
 ## Things that depend on the TV, not on Broom
