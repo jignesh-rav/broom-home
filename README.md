@@ -8,6 +8,10 @@ Nothing here needs root, a PC app or an account. Every change can be undone.
 
 > Built and tested on a Mi TV 4A/4C Pro 32" (`MiTV-AXSO0`, codename `dangal`, Android TV 9). It should run on most Android TV 9+ boxes and TVs. The remote-button helper is written for Xiaomi PatchWall.
 
+![Broom Home on a Mi TV, Kerala Backwaters theme](docs/screenshots/01-home-kerala.jpg)
+
+**Fastest install:** turn on [ADB over Wi-Fi](#step-1-turn-on-adb-over-wi-fi-on-the-tv), then [ask Claude to do it](#path-a-let-claude-install-it-fastest).
+
 ## What you get
 
 **Home screen**
@@ -38,16 +42,26 @@ A full tour with the remote is in **[docs/FEATURES.md](docs/FEATURES.md)**.
 
 All data comes from free public feeds that need no API keys: Open-Meteo, Yahoo Finance (delayed, display only), ESPNcricinfo, ESPN, BBC, NASA, Ars Technica, TechCrunch, MIT Technology Review, Google News and Wikimedia.
 
+## Screenshots
+
+| | |
+|---|---|
+| ![Neon City theme](docs/screenshots/02-home-neon.jpg) Neon City theme | ![Diwali decorations](docs/screenshots/03-home-diwali.jpg) Festival day: Diwali |
+| ![Theme gallery](docs/screenshots/04-themes.jpg) Theme gallery | ![Briefing](docs/screenshots/05-briefing.jpg) Briefing: markets, scores, news |
+| ![Features tick-list](docs/screenshots/06-features.jpg) Settings → Features | ![Weather](docs/screenshots/07-weather.jpg) Weather and walk / jog planner |
+| ![Panchang](docs/screenshots/08-panchang.jpg) Panchang, worked out offline | ![Quick settings](docs/screenshots/12-quick-settings.jpg) Quick settings |
+| ![Photo screensaver](docs/screenshots/09-screensaver-photos.jpg) Screensaver: Animals photo pack | ![Mandala screensaver](docs/screenshots/10-screensaver-mandala.jpg) Screensaver: Rangoli Mandala |
+
 ## Install: do I need to build anything?
 
-**No.** Most people never build. Pick a path:
+**No.** Most people never build. Everyone does [Step 1](#step-1-turn-on-adb-over-wi-fi-on-the-tv) on the TV first, then picks one path:
 
-| | Path A: ready-made APK (recommended) | Path B: build it yourself |
-|---|---|---|
-| Who | Anyone who wants Broom on their TV | People who want to change the code |
-| You need | A computer on the same Wi-Fi (Windows, Mac or Linux) and ADB | The same, plus Android SDK, JDK 17 and Python 3 |
-| Time | About 10 minutes | About 30 minutes the first time |
-| Steps | [Path A](#path-a-ready-made-apk-no-build) | [Path B](#path-b-build-from-source) |
+| | Path A: let Claude install it | Path B: run the script yourself | Path C: build from source |
+|---|---|---|---|
+| Who | Anyone, no technical steps | Comfortable with a terminal | People changing the code |
+| You need | [Claude Code](https://claude.com/claude-code) on a computer on the same Wi-Fi | A computer on the same Wi-Fi and ADB | The same, plus Android SDK, JDK 17 and Python 3 |
+| Time | About 5 minutes | About 10 minutes | About 30 minutes the first time |
+| Steps | [Path A](#path-a-let-claude-install-it-fastest) | [Path B](#path-b-run-the-installer-yourself-no-build) | [Path C](#path-c-build-from-source) |
 
 ### Why a computer (ADB) is needed once
 
@@ -64,14 +78,40 @@ Mi TVs hide the Accessibility settings page that would normally let you do this 
 
 Only Broom is side-loaded. Your other apps (Netflix, YouTube, Hotstar…) stay as they are, and you keep installing apps from the Play Store as usual.
 
-### Path A: ready-made APK (no build)
+### Step 1: turn on ADB over Wi-Fi on the TV
 
-1. **Turn on ADB on the TV** (one time):
-   - Settings → Device Preferences → About → press OK on **Build** 7 times
-   - Back → Developer options → **USB debugging: On** (on Mi TVs this also turns on ADB over Wi-Fi)
-   - Note the TV's IP address: Settings → Network & Internet → your Wi-Fi, for example `192.168.1.50`
+Do this once, with the remote. It lets a computer on your Wi-Fi send setup commands to the TV.
 
-   More help: [docs/SETUP.md](docs/SETUP.md).
+1. **Connect the TV to the same Wi-Fi** as your computer.
+2. **Unlock Developer options:** open **Settings** (the gear icon on the TV's home screen) → **Device Preferences** → **About** → scroll to **Build** and press **OK 7 times**. You'll see "You are now a developer".
+3. **Turn on debugging:** go Back to **Device Preferences** → **Developer options** → **USB debugging: On** → OK. Despite the name, on Mi TVs (Android TV 9) this also turns on **ADB over Wi-Fi on port 5555**. No cable needed.
+4. **Find the TV's IP address:** Settings → **Network & Internet** → select your Wi-Fi network → **IP address**, for example `192.168.1.50`. Write it down.
+   Tip: in your router's settings, reserve this IP for the TV so it doesn't change.
+5. Leave the TV **switched on, showing any screen**. The first time a computer connects, the TV asks **"Allow USB debugging?"**. Tick **Always allow from this computer** and press **OK**.
+
+To turn this off again after setup, set Developer options → USB debugging to Off. Turn it back on only when you need to re-run the installer.
+
+### Path A: let Claude install it (fastest)
+
+[Claude Code](https://claude.com/claude-code) can run commands on your computer, so it can install ADB, connect to the TV and run the installer for you. Use the **Code** tab in the Claude desktop app, or `claude` in a terminal. The normal claude.ai chat in a browser can't reach your TV.
+
+1. Do [Step 1](#step-1-turn-on-adb-over-wi-fi-on-the-tv) on the TV.
+2. Open Claude Code in any folder and paste this, with your TV's IP:
+
+   ```text
+   Install Broom Home on my Mi TV from https://github.com/jignesh-rav/broom-home
+   My TV's IP is 192.168.1.50 and USB debugging is on (Step 1 of the README is done).
+   Clone the repo, follow its CLAUDE.md, install adb if it's missing, and run the installer.
+   Ask me before debloating or turning on the ad-blocking DNS.
+   ```
+3. When Claude says it's connecting, look at the TV and accept **"Allow USB debugging?"**.
+4. Press **Home** on the remote.
+
+Claude follows [`CLAUDE.md`](CLAUDE.md), which spells out the steps, the checks to run afterwards and what it must never touch. You can also ask it for more afterwards, for example "debloat my TV but keep Mi screen mirroring", "undo everything", "switch off the markets feature", or "change the watchlist to US stocks only and rebuild".
+
+### Path B: run the installer yourself (no build)
+
+1. Do [Step 1](#step-1-turn-on-adb-over-wi-fi-on-the-tv) on the TV.
 2. **Install ADB on your computer**:
    - Windows: `winget install Google.PlatformTools`
    - macOS: `brew install android-platform-tools`
@@ -106,7 +146,7 @@ Then take the tour in **[docs/FEATURES.md](docs/FEATURES.md)**.
 
 **No computer at all?** An Android phone with an ADB app can do the same job. See [docs/SETUP.md](docs/SETUP.md#no-computer-use-an-android-phone).
 
-### Path B: build from source
+### Path C: build from source
 
 Only needed if you change the code. No Android Studio or Gradle. You need:
 - the Android SDK command-line tools with `build-tools` and `platforms;android-28`
