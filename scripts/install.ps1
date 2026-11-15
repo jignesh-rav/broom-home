@@ -18,8 +18,21 @@ if (-not $Apk) {
     $Apk = @("$root\launcher\build\BroomHome.apk", "$PSScriptRoot\BroomHome.apk", "$root\BroomHome.apk") |
            Where-Object { Test-Path $_ } | Select-Object -First 1
 }
+if (-not $Apk) {
+    # No local APK: download the latest release (no build needed)
+    $Apk = "$PSScriptRoot\BroomHome.apk"
+    Write-Host "Downloading the latest BroomHome.apk from GitHub Releases..."
+    try {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        Invoke-WebRequest -UseBasicParsing "https://github.com/jignesh-rav/broom-home/releases/latest/download/BroomHome.apk" -OutFile $Apk
+    } catch { $Apk = $null }
+}
 if (-not $Apk -or -not (Test-Path $Apk)) {
-    Write-Host "No APK found. Build it (launcher/build.sh) or download BroomHome.apk from the GitHub Releases page and pass -Apk." -ForegroundColor Red
+    Write-Host "No APK. Download BroomHome.apk from the GitHub Releases page into this folder (or build it with launcher/build.sh)." -ForegroundColor Red
+    exit 1
+}
+if (-not (Get-Command adb -ErrorAction SilentlyContinue)) {
+    Write-Host "adb not found. Install it with:  winget install Google.PlatformTools   then open a new PowerShell window." -ForegroundColor Red
     exit 1
 }
 

@@ -48,6 +48,34 @@ The installer does the following:
 | Accessibility service "Broom button helper" | Sends the remote's Home button to Broom instead of PatchWall. PatchWall stays installed because it owns the input-source pop-up |
 | Sets Broom as Home and screensaver, disables the stock Android TV launcher | |
 
+## No computer? Use an Android phone
+
+Not tested by the author, but it's the same ADB commands run from a phone app instead of a computer.
+
+1. Do step 1 above on the TV: USB debugging on, and note the IP.
+2. On an Android phone on the same Wi-Fi, install an ADB client app from the Play Store, for example *Bugjaeger* or *Remote ADB Shell*.
+3. Connect to `<TV-IP>:5555` and accept the prompt on the TV.
+4. Install the APK. Most ADB apps can install an APK file you've downloaded to the phone: get `BroomHome.apk` from the Releases page first.
+5. Open the app's shell and paste this one line:
+   ```
+   pm grant com.broom.launcher android.permission.WRITE_SECURE_SETTINGS; pm grant com.broom.launcher android.permission.ACCESS_FINE_LOCATION; pm grant com.broom.launcher android.permission.ACCESS_COARSE_LOCATION; pm grant com.broom.launcher android.permission.READ_EXTERNAL_STORAGE; appops set com.broom.launcher WRITE_SETTINGS allow; appops set com.broom.launcher GET_USAGE_STATS allow; settings put secure enabled_accessibility_services com.broom.launcher/com.broom.launcher.KeyRemapService; settings put secure accessibility_enabled 1; settings put secure screensaver_components com.broom.launcher/.BroomDream; cmd package set-home-activity --user 0 com.broom.launcher/.MainActivity; pm disable-user --user 0 com.google.android.tvlauncher
+   ```
+6. Press **Home** on the remote.
+
+To undo from the phone, run `pm enable com.google.android.tvlauncher; pm uninstall com.broom.launcher` and reboot the TV.
+
+## What works without ADB at all (USB stick only)
+
+You can copy `BroomHome.apk` to a USB stick and install it with the TV's file manager. You'll have to allow "unknown sources" for the file manager when the TV asks. Broom then runs as a normal app from the app list, and the following work:
+- Briefing, Weather (use **Change area**), Panchang, themes
+- the screensavers, if your TV's Settings has a Screen saver page where you can pick Broom
+
+What you **don't** get without ADB:
+- The Home button and power-on still go to PatchWall
+- No pop-ups
+- No screensaver timers from inside Broom
+- An empty "Recently used" row
+
 ## 4. First run
 
 - Press **Home**. If the TV asks, pick **Broom Home → Always**.

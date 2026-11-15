@@ -13,7 +13,14 @@ for a in "$@"; do case "$a" in --debloat) DEBLOAT=1;; --adblock-dns) DNS=1;; esa
 HERE="$(cd "$(dirname "$0")" && pwd)"; ROOT="$(dirname "$HERE")"
 APK="${APK:-}"
 for f in "$ROOT/launcher/build/BroomHome.apk" "$HERE/BroomHome.apk" "$ROOT/BroomHome.apk"; do [ -z "$APK" ] && [ -f "$f" ] && APK="$f"; done
-[ -f "$APK" ] || { echo "No APK found. Build it (launcher/build.sh) or download BroomHome.apk from Releases and set APK=..."; exit 1; }
+if [ -z "$APK" ]; then
+  # No local APK: download the latest release (no build needed)
+  APK="$HERE/BroomHome.apk"
+  echo "Downloading the latest BroomHome.apk from GitHub Releases..."
+  curl -fL -o "$APK" "https://github.com/jignesh-rav/broom-home/releases/latest/download/BroomHome.apk" || rm -f "$APK"
+fi
+[ -f "$APK" ] || { echo "No APK. Download BroomHome.apk from Releases into scripts/ (or build with launcher/build.sh)."; exit 1; }
+command -v adb >/dev/null || { echo "adb not found. macOS: brew install android-platform-tools   Linux: sudo apt install adb"; exit 1; }
 
 PKG=com.broom.launcher
 sh_() { adb -s "$TV" shell "$1" 2>/dev/null; }
