@@ -79,9 +79,9 @@ Only Broom is side-loaded. Your other apps (Netflix, YouTube, Hotstar…) stay a
 3. **Download this repo:** the green **Code** button → **Download ZIP**, then unzip it.
 4. **Run the installer** from the `scripts` folder. It downloads the latest `BroomHome.apk` from [Releases](../../releases/latest) by itself:
 
-   Windows (PowerShell, inside `scripts`):
+   Windows: open the `scripts` folder, Shift + right-click on an empty spot → **Open PowerShell window here**, then:
    ```powershell
-   .\install.ps1 -Tv 192.168.1.50
+   powershell -ExecutionPolicy Bypass -File .\install.ps1 -Tv 192.168.1.50
    ```
    macOS / Linux (Terminal, inside `scripts`):
    ```bash
@@ -102,7 +102,7 @@ Then take the tour in **[docs/FEATURES.md](docs/FEATURES.md)**.
 
 **After a Xiaomi update**, run the same command again. It's safe to repeat and only fixes what's missing.
 
-**Undo everything:** `.\undo.ps1 -Tv 192.168.1.50` (or `./undo.sh 192.168.1.50`), then reboot the TV.
+**Undo everything:** `powershell -ExecutionPolicy Bypass -File .\undo.ps1 -Tv 192.168.1.50` (or `./undo.sh 192.168.1.50`), then reboot the TV.
 
 **No computer at all?** An Android phone with an ADB app can do the same job. See [docs/SETUP.md](docs/SETUP.md#no-computer-use-an-android-phone).
 

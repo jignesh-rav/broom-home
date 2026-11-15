@@ -37,18 +37,19 @@ if (-not (Get-Command adb -ErrorAction SilentlyContinue)) {
 }
 
 $pkg = "com.broom.launcher"
-function Adb { & adb -s $Tv @args }
-function Sh([string]$cmd) { (& adb -s $Tv shell $cmd 2>$null | Out-String).Trim() }
+# call adb.exe by its full path (a PowerShell function named like it would shadow it)
+$adbExe = (Get-Command adb -CommandType Application | Select-Object -First 1).Source
+function Sh([string]$cmd) { (& $adbExe -s $Tv shell $cmd 2>$null | Out-String).Trim() }
 
 Write-Host "Connecting to $Tv (accept the 'Allow USB debugging' prompt on the TV if it appears)..."
-& adb connect $Tv | Out-Host
-if ((& adb -s $Tv get-state 2>$null) -ne "device") {
+& $adbExe connect $Tv | Out-Host
+if ((& $adbExe -s $Tv get-state 2>$null) -ne "device") {
     Write-Host "Could not connect. Check the IP, that the TV is on, and that ADB debugging is enabled (see docs/SETUP.md)." -ForegroundColor Red
     exit 1
 }
 
 Write-Host "Installing $Apk ..."
-Adb install -r $Apk | Out-Host
+& $adbExe -s $Tv install -r $Apk | Out-Host
 
 Write-Host "Granting permissions..."
 Sh "pm grant $pkg android.permission.WRITE_SECURE_SETTINGS" | Out-Null      # screensaver + remote-button helper
@@ -93,4 +94,4 @@ if ($AdBlockDns) {
 
 Write-Host ""
 Write-Host "Done. Press Home on the remote. If the TV asks which Home app to use, pick Broom Home -> Always." -ForegroundColor Green
-Write-Host "Undo everything any time: .\undo.ps1 -Tv $($Tv -replace ':5555$','')"
+Write-Host "Undo everything any time: powershell -ExecutionPolicy Bypass -File .\undo.ps1 -Tv $($Tv -replace ':5555$','')"

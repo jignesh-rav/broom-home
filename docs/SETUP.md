@@ -34,7 +34,10 @@ From the repo's `scripts` folder:
 | Use a downloaded APK | add `-Apk ..\BroomHome.apk` | prefix `APK=../BroomHome.apk` |
 | Undo all | `.\undo.ps1 -Tv 192.168.1.50` | `./undo.sh 192.168.1.50` |
 
-If PowerShell refuses to run scripts, run this once: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
+**Windows:** PowerShell blocks scripts that come from a downloaded ZIP, so start each one like this:
+`powershell -ExecutionPolicy Bypass -File .\install.ps1 -Tv 192.168.1.50` (the same for `undo.ps1`).
+
+**macOS / Linux:** if you get "permission denied", run `bash install.sh 192.168.1.50`.
 
 The installer does the following:
 
