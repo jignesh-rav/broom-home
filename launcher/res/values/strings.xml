@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="a11y_desc">Broom Home button helper: makes the PatchWall / Mi button on the remote open Broom Home. It does not read screen content.</string>
+</resources>

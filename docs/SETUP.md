@@ -1,0 +1,93 @@
+# Setup guide
+
+## 1. Turn on ADB on the TV
+
+1. On the TV open **Settings → Device Preferences → About**.
+2. Scroll to **Build** and press OK on it 7 times. You'll see "You are now a developer".
+3. Go back to **Device Preferences → Developer options** and turn **USB debugging** on.
+   On Mi TVs this also opens ADB over the network on port 5555.
+4. Find the TV's IP address: **Settings → Network & Internet → (your Wi-Fi)**. It looks like `192.168.1.50`.
+   Tip: reserve this IP for the TV in your router so it doesn't change.
+
+## 2. Install ADB on your computer
+
+Download **SDK Platform-Tools** from <https://developer.android.com/tools/releases/platform-tools> and unzip it. Then add the folder to your PATH, or run the scripts from inside it.
+- Windows: `winget install Google.PlatformTools`
+- macOS: `brew install android-platform-tools`
+- Linux: `sudo apt install adb`
+
+Check it works:
+```bash
+adb connect 192.168.1.50:5555
+```
+The first time, the TV shows **"Allow USB debugging?"**. Tick *Always allow from this computer* and press OK. Then run `adb devices`, which should list the TV as `device`.
+
+## 3. Run the installer
+
+From the repo's `scripts` folder:
+
+| | Windows (PowerShell) | macOS / Linux / Git Bash |
+|---|---|---|
+| Install Broom | `.\install.ps1 -Tv 192.168.1.50` | `./install.sh 192.168.1.50` |
+| + debloat | `.\install.ps1 -Tv 192.168.1.50 -Debloat` | `./install.sh 192.168.1.50 --debloat` |
+| + ad-blocking DNS | add `-AdBlockDns` | add `--adblock-dns` |
+| Use a downloaded APK | add `-Apk ..\BroomHome.apk` | prefix `APK=../BroomHome.apk` |
+| Undo all | `.\undo.ps1 -Tv 192.168.1.50` | `./undo.sh 192.168.1.50` |
+
+If PowerShell refuses to run scripts, run this once: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
+
+The installer does the following:
+
+| Step | Why |
+|---|---|
+| Installs the APK | |
+| `WRITE_SECURE_SETTINGS` | Lets Broom set itself as the screensaver and keep its remote-button helper on |
+| Location | Weather and Panchang for your area. Rounded to about 1 km and only sent to Open-Meteo. You can type an area instead (Weather → Change area) |
+| Storage | Screensaver photos from a USB stick |
+| `WRITE_SETTINGS`, usage access | Screensaver timer and the "Recently used" row |
+| Accessibility service "Broom button helper" | Sends the remote's Home button to Broom instead of PatchWall. PatchWall stays installed because it owns the input-source pop-up |
+| Sets Broom as Home and screensaver, disables the stock Android TV launcher | |
+
+## 4. First run
+
+- Press **Home**. If the TV asks, pick **Broom Home → Always**.
+- **Settings** (top-right button) opens Quick settings: Themes, Screensaver, Weather, Features, Sleep timer, sounds, live score pop-ups and the real TV settings.
+- **Settings → Features** switches whole sections on or off: markets, cricket, football, Panchang and each news category.
+- **Briefing → Watchlist** edits the stock lists with the remote.
+- Long-press OK on an app to add it to or remove it from Favourites, or to move it.
+
+## 5. After a Xiaomi update
+
+Updates sometimes switch the stock launcher back on or reset permissions. Run the installer again. It only fixes what's missing.
+
+## Building
+
+Install:
+- **Android SDK command-line tools**: <https://developer.android.com/studio#command-tools>. Then run `sdkmanager "build-tools;34.0.0" "platforms;android-28"`.
+- **JDK 17 or newer**, such as Temurin or the JBR bundled with Android Studio / IntelliJ, with `java`, `javac` and `keytool` on PATH.
+- **Python 3**.
+
+Then build:
+```bash
+cd launcher
+./build.sh                          # Windows: run it in Git Bash
+```
+The script looks for the SDK in `ANDROID_HOME`, `ANDROID_SDK_ROOT` or the usual install folders. It uses the newest build-tools and android.jar it finds. Set `ANDROID_JAR=/path/to/platforms/android-28/android.jar` to pick one yourself.
+
+**Signing:** the first build creates `launcher/broom.keystore`. Back it up. A build signed with a different key can't update an installed copy; you'd have to uninstall first and lose Broom's settings. Set `KEYSTORE_PASS` before the first build to choose your own password.
+
+Install a new build quickly:
+```bash
+adb -s 192.168.1.50:5555 install -r build/BroomHome.apk
+```
+
+## Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| `adb connect` times out | TV off or asleep, wrong IP, or USB debugging off. Some routers block devices from seeing each other ("AP isolation"). |
+| `unauthorized` | Accept the prompt on the TV. If it never appeared: Developer options → Revoke USB debugging authorisations, then connect again. |
+| Home button still opens PatchWall | Re-run the installer, which re-enables the button helper. Don't `force-stop` Broom. |
+| Weather says "set area" | Weather → Change area, then type your city or area. |
+| Photo screensaver stays on the clock | It needs internet the first time. Some networks block `commons.wikimedia.org`; Broom then falls back to Wikipedia's featured pictures. |
+| Something went wrong | `undo` puts everything back. Reboot the TV afterwards. |

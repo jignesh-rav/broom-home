@@ -1,0 +1,39 @@
+# Packages that are safe to DISABLE on a Xiaomi Mi TV (PatchWall, Android TV 9).
+# Disabled = switched off, not deleted. `undo` turns every one back on.
+# Delete or comment out (#) any line you want to keep. Packages missing on your TV are skipped.
+#
+# Never listed (remote, HDMI, voice, casting, Play Store, updates must keep working):
+#   com.droidlogic.*, com.android.bluetooth, com.google.android.tv.remote.service, com.android.tv,
+#   com.google.android.katniss, com.google.android.gms, com.android.vending, com.google.android.apps.mediashell,
+#   com.xiaomi.mitv.updateservice, com.mitv.tvhome.atv (PatchWall: it owns the input-source pop-up)
+
+# --- telemetry and ads
+com.miui.tv.analytics
+com.xiaomi.statistic
+com.google.android.feedback
+com.google.android.tv.bugreportsender
+com.mitv.tvhome.mitvplus
+com.google.android.tvrecommendations
+com.google.android.leanbacklauncher.recommendations
+com.xm.webcontent
+
+# --- unused on a TV
+com.xiaomi.mitv.handbook
+com.xiaomi.android.TV.audio
+com.android.camera2
+com.android.gallery3d
+com.android.printspooler
+com.android.smspush
+com.google.android.syncadapters.calendar
+
+# --- optional: your call (comment out to keep)
+com.google.android.backdrop            # Google ambient screensaver; Broom has its own
+com.google.android.youtube.tvkids      # YouTube Kids
+com.xiaomi.mimusic2                    # Mi Music
+com.mitv.gallery                       # Mi Gallery (Broom shows USB photos itself)
+com.google.android.marvin.talkback     # screen reader, keep if anyone needs it
+com.mitv.milinkservice                 # Mi screen mirroring (Chromecast still works)
+com.xiaomi.mitv.smartshare             # Mi screen mirroring
+com.xiaomi.wfdsinkhelperservice        # Miracast
+com.google.android.videos              # Play Movies
+com.google.android.play.games          # Play Games

@@ -1,0 +1,12 @@
+# build output and signing key (each builder makes their own)
+launcher/build/
+*.keystore
+*.jks
+*.apk
+*.idsig
+# local logs / snapshots
+*.log
+broom-settings*.json
+crash.txt
+.DS_Store
+Thumbs.db

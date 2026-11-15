@@ -1,0 +1,110 @@
+{
+ "device": "Xiaomi MiTV-AXSO0 (dangal) · Android TV 9",
+ "measured": "backup-20261115-023519-after",
+ "before": {
+  "ram_total_mb": 990,
+  "ram_avail_mb": 178,
+  "data_free_mb": 1483,
+  "pkgs_total": 119,
+  "pkgs_disabled": 0,
+  "pkgs_active": 119,
+  "load": "3.26",
+  "load_all": "3.26 / 3.02 / 2.94",
+  "top": [
+   [
+    "Netflix",
+    80
+   ],
+   [
+    "Stock Android TV home",
+    77
+   ],
+   [
+    "Prime Video",
+    70
+   ],
+   [
+    "PatchWall",
+    67
+   ],
+   [
+    "Google Play services",
+    51
+   ],
+   [
+    "Android system",
+    51
+   ],
+   [
+    "Google Assistant",
+    34
+   ],
+   [
+    "Xiaomi updater",
+    27
+   ],
+   [
+    "Play Store",
+    25
+   ],
+   [
+    "System UI",
+    23
+   ]
+  ]
+ },
+ "after": {
+  "ram_total_mb": 990,
+  "ram_avail_mb": 277,
+  "data_free_mb": 1697,
+  "pkgs_total": 115,
+  "pkgs_disabled": 26,
+  "pkgs_active": 89,
+  "load": "3.63",
+  "load_all": "3.63 / 3.28 / 3.05",
+  "top": [
+   [
+    "Google Play services",
+    77
+   ],
+   [
+    "com.sonyliv",
+    65
+   ],
+   [
+    "PatchWall",
+    64
+   ],
+   [
+    "com.google.android.youtube.tv",
+    57
+   ],
+   [
+    "Play Store",
+    56
+   ],
+   [
+    "Broom Home (new)",
+    55
+   ],
+   [
+    "Android system",
+    47
+   ],
+   [
+    "org.smarttube.stable",
+    33
+   ],
+   [
+    "Chromecast",
+    27
+   ],
+   [
+    "Keyboard",
+    24
+   ]
+  ]
+ },
+ "disabled": 26,
+ "uninstalled": 6
+}
