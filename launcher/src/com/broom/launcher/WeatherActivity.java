@@ -366,19 +366,43 @@ public class WeatherActivity extends Activity {
     private void askArea() {
         final EditText in = new EditText(this);
         in.setSingleLine(true);
-        in.setHint("Area or city, e.g. Borivali, Powai, Thane");
+        in.setHint("Area, city, or lat, lon (e.g. Powai Mumbai or 19.12, 72.91)");
         new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
                 .setTitle("Weather area")
                 .setView(in)
-                .setPositiveButton("Save", new DialogInterface.OnClickListener() {
+                .setPositiveButton("Search", new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface d, int w) {
-                        Weather.setCity(WeatherActivity.this, in.getText().toString(), new Weather.CityResult() {
-                            @Override public void done(String name) {
-                                if (name == null) { Toast.makeText(WeatherActivity.this, "Area not found - try a nearby bigger place", Toast.LENGTH_LONG).show(); return; }
-                                Weather.refresh(WeatherActivity.this, true, listener);
-                            }
+                        final String q = in.getText().toString();
+                        Toast.makeText(WeatherActivity.this, "Searching...", Toast.LENGTH_SHORT).show();
+                        Weather.search(WeatherActivity.this, q, new Weather.PlacesResult() {
+                            @Override public void done(java.util.List<Weather.Place> places) { pickPlace(q, places); }
                         });
                     }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /** Shows every match so the right one can be picked (typed names are often ambiguous). */
+    private void pickPlace(String q, final java.util.List<Weather.Place> places) {
+        if (isFinishing()) return;
+        if (places.isEmpty()) {
+            Toast.makeText(this, "No match for \"" + q + "\" - try adding the city, e.g. \"Powai Mumbai\"", Toast.LENGTH_LONG).show();
+            return;
+        }
+        String[] names = new String[places.size()];
+        for (int i = 0; i < names.length; i++) names[i] = places.get(i).name;
+        new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                .setTitle("Pick your area")
+                .setItems(names, new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface d, int which) {
+                        Weather.setPlace(WeatherActivity.this, places.get(which));
+                        Toast.makeText(WeatherActivity.this, "Weather for " + places.get(which).name, Toast.LENGTH_SHORT).show();
+                        Weather.refresh(WeatherActivity.this, true, listener);
+                    }
+                })
+                .setNeutralButton("Search again", new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface d, int w) { askArea(); }
                 })
                 .setNegativeButton("Cancel", null)
                 .show();

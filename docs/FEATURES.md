@@ -55,7 +55,7 @@ Opens from the button, from the ticker, or by itself on the first switch-on betw
 - Now, warnings and trends, sunrise and sunset
 - **Walk / jog planner** for 3 days. It rates slots on temperature, humidity, rain, UV and air quality. When the air is bad it says "Poor all day: better to exercise indoors" instead of picking a "best" slot
 - 24-hour and 14-day forecasts, and air quality (AQI, PM2.5)
-- **Use TV location**: uses your Wi-Fi location, rounded to about 1 km. **Change area**: type a city or area instead
+- **Use TV location**: uses your Wi-Fi location, rounded to about 1 km. If no app has asked for the location yet (common on a debloated TV), Broom asks the TV for a fresh one. **Change area**: type an area, a city, or "lat, lon", then pick the right match from the list
 
 Data comes from Open-Meteo (free, no account).
 

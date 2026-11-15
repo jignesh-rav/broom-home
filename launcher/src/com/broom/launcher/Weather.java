@@ -100,6 +100,84 @@ final class Weather {
         }).start();
     }
 
+    /** A place the person can pick when changing the weather area. */
+    static final class Place {
+        final String name; final double lat, lon;
+        Place(String name, double lat, double lon) { this.name = name; this.lat = lat; this.lon = lon; }
+    }
+    interface PlacesResult { void done(List<Place> places); }
+
+    /**
+     * Finds places matching what was typed. Accepts "lat, lon" too. Uses the TV's own geocoder first
+     * (Google: knows neighbourhoods and localities), then Open-Meteo's place search, and returns both,
+     * without duplicates, so the person can pick the right one.
+     */
+    static void search(final Context ctx, final String query, final PlacesResult r) {
+        final Context c = ctx.getApplicationContext();
+        new Thread(new Runnable() {
+            @Override public void run() {
+                final List<Place> out = new ArrayList<>();
+                String q = query == null ? "" : query.trim();
+                java.util.regex.Matcher m = java.util.regex.Pattern
+                        .compile("^\\s*(-?\\d{1,2}(?:\\.\\d+)?)\\s*[, ]\\s*(-?\\d{1,3}(?:\\.\\d+)?)\\s*$").matcher(q);
+                if (m.matches()) {
+                    double lat = Double.parseDouble(m.group(1)), lon = Double.parseDouble(m.group(2));
+                    String n = areaName(c, lat, lon);
+                    out.add(new Place(n != null ? n : String.format(Locale.US, "%.3f, %.3f", lat, lon), lat, lon));
+                } else if (!q.isEmpty()) {
+                    try {
+                        if (android.location.Geocoder.isPresent()) {
+                            List<android.location.Address> l = new android.location.Geocoder(c, Locale.ENGLISH).getFromLocationName(q, 6);
+                            if (l != null) for (android.location.Address a : l) {
+                                if (!a.hasLatitude()) continue;
+                                String n = label(a);
+                                if (n != null) addPlace(out, new Place(n, a.getLatitude(), a.getLongitude()));
+                            }
+                        }
+                    } catch (Exception ignored) { }
+                    try {
+                        JSONObject o = new JSONObject(get("https://geocoding-api.open-meteo.com/v1/search?count=10&language=en&name="
+                                + URLEncoder.encode(q, "UTF-8")));
+                        org.json.JSONArray a = o.optJSONArray("results");
+                        if (a != null) for (int i = 0; i < a.length(); i++) {
+                            JSONObject g = a.getJSONObject(i);
+                            StringBuilder n = new StringBuilder(g.getString("name"));
+                            for (String k : new String[]{"admin2", "admin1", "country"}) {
+                                String v = g.optString(k, "");
+                                if (!v.isEmpty() && n.indexOf(v) < 0) n.append(", ").append(v);
+                            }
+                            addPlace(out, new Place(n.toString(), g.getDouble("latitude"), g.getDouble("longitude")));
+                        }
+                    } catch (Exception ignored) { }
+                }
+                new Handler(Looper.getMainLooper()).post(new Runnable() { @Override public void run() { r.done(out); } });
+            }
+        }).start();
+    }
+
+    private static void addPlace(List<Place> out, Place p) {
+        for (Place x : out) if (Math.abs(x.lat - p.lat) < 0.01 && Math.abs(x.lon - p.lon) < 0.01) return;
+        out.add(p);
+    }
+
+    private static String label(android.location.Address a) {
+        StringBuilder b = new StringBuilder();
+        for (String v : new String[]{a.getFeatureName(), a.getSubLocality(), a.getLocality(), a.getAdminArea(), a.getCountryName()}) {
+            if (v == null || v.isEmpty() || v.matches("^[0-9 ,+-]+$") || b.indexOf(v) >= 0) continue;
+            if (b.length() > 0) b.append(", ");
+            b.append(v);
+        }
+        return b.length() == 0 ? null : b.toString();
+    }
+
+    /** Saves a picked place as the (manual) weather area. Short name: the first two parts of the label. */
+    static void setPlace(Context ctx, Place p) {
+        String[] parts = p.name.split(",\\s*");
+        String shortName = parts.length > 1 ? parts[0] + ", " + parts[1] : p.name;
+        prefs(ctx).edit().putLong("wx_lat", Double.doubleToLongBits(p.lat)).putLong("wx_lon", Double.doubleToLongBits(p.lon))
+                .putString("wx_city", shortName).putBoolean("wx_auto", false).remove("wx_time").apply();
+    }
+
     static void setCity(final Context ctx, final String query, final CityResult r) {
         final Context c = ctx.getApplicationContext();
         new Thread(new Runnable() {
@@ -138,6 +216,7 @@ final class Weather {
                             if (l != null && (best == null || l.getTime() > best.getTime())) best = l;
                         } catch (Exception ignored) { }
                     }
+                    if (best == null) best = freshLocation(lm);
                     if (best != null) {
                         double lat = Math.round(best.getLatitude() * 100) / 100.0, lon = Math.round(best.getLongitude() * 100) / 100.0;
                         name = areaName(c, best.getLatitude(), best.getLongitude());
@@ -151,6 +230,37 @@ final class Weather {
                 if (r != null) new Handler(Looper.getMainLooper()).post(new Runnable() { @Override public void run() { r.done(res); } });
             }
         }).start();
+    }
+
+    /**
+     * Nothing cached (no other app has asked for location since boot, common on debloated TVs):
+     * ask the network / fused provider for one fix and wait up to 30 s. Runs on a background thread.
+     */
+    @SuppressWarnings("MissingPermission")
+    private static android.location.Location freshLocation(android.location.LocationManager lm) {
+        final android.location.Location[] got = new android.location.Location[1];
+        final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+        android.os.HandlerThread ht = new android.os.HandlerThread("broom-loc");
+        ht.start();
+        final android.location.LocationListener ll = new android.location.LocationListener() {
+            @Override public void onLocationChanged(android.location.Location l) {
+                synchronized (got) { if (got[0] == null) got[0] = l; }
+                latch.countDown();
+            }
+            @Override public void onStatusChanged(String p, int s, android.os.Bundle b) { }
+            @Override public void onProviderEnabled(String p) { }
+            @Override public void onProviderDisabled(String p) { }
+        };
+        int asked = 0;
+        for (String p : new String[]{android.location.LocationManager.NETWORK_PROVIDER, "fused"}) {
+            try {
+                if (lm.getAllProviders().contains(p)) { lm.requestSingleUpdate(p, ll, ht.getLooper()); asked++; }
+            } catch (Exception ignored) { }
+        }
+        try { if (asked > 0) latch.await(30, java.util.concurrent.TimeUnit.SECONDS); } catch (InterruptedException ignored) { }
+        try { lm.removeUpdates(ll); } catch (Exception ignored) { }
+        ht.quitSafely();
+        synchronized (got) { return got[0]; }
     }
 
     static String areaName(Context c, double lat, double lon) {
