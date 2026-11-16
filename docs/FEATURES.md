@@ -46,7 +46,8 @@ Opens from the button, from the ticker, or by itself on the first switch-on betw
 - The page moves to the next tab every 2 minutes. Pressing any key pauses that for 2 minutes
 - Every stock card shows price, % change and a 5-day mini chart. Each tracker shows its best and worst mover
 - Market data is delayed about 15 minutes. It refreshes every 5 minutes while a market is open and hourly otherwise
-- **Watchlist**: add a stock (search by name or symbol), remove it, move it up or down, rename it, or reset to the defaults. Set alerts for an index moving 1%+ or a stock moving 5%+. Alerts pop up over any app during market hours
+- **Default lists:** India: large caps (Reliance, HDFC Bank, TCS, HAL, BEL…) plus the most-followed mid / small caps and new-age stocks (Eternal, Trent, Swiggy, Paytm, PB Fintech, Jio Financial, Dixon, Polycab, Persistent, Kaynes, BSE, CDSL, Mazagon Dock, Suzlon, IRFC, IndiGo). US tech & AI: Nvidia, Apple, Alphabet, Microsoft, Amazon, Meta, Tesla, Broadcom, AMD, TSMC and more. When a list is longer than 20, the Briefing screensaver page shows its 20 biggest movers
+- **Watchlist**: add a stock (search by name or symbol), remove it, move it up or down, rename it, or reset to the defaults. New default stocks are added to an edited watchlist once, after an update. Set alerts for an index moving 1%+ or a stock moving 5%+. Alerts pop up over any app during market hours
 - **Customise**: the same Features tick-list as in Settings
 - **Refresh**: fetch everything now
 

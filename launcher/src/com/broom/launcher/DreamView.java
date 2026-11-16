@@ -633,6 +633,14 @@ public class DreamView extends FrameLayout {
             if (page == 1 || page == 2) {
                 java.util.List<Briefing.Quote> qs = Briefing.group(getContext(), page == 1 ? Briefing.MAIN + 2 : Briefing.MAIN + 3);
                 if (qs.isEmpty()) { text(c, "Loading…", x, y, h * 0.035f, 0xCCFFFFFF, "Poppins-Light"); return; }
+                if (qs.size() > 20) {   // only 20 fit: show the biggest movers, so nothing important is cut off by list order
+                    qs = new java.util.ArrayList<>(qs);
+                    java.util.Collections.sort(qs, new java.util.Comparator<Briefing.Quote>() {
+                        @Override public int compare(Briefing.Quote a, Briefing.Quote b) { return Double.compare(Math.abs(b.pct), Math.abs(a.pct)); }
+                    });
+                    qs = qs.subList(0, 20);
+                    text(c, "TOP 20 MOVERS", x + w * 0.5f, y - h * 0.07f, h * 0.02f, 0x99FFFFFF, "Poppins-Light");
+                }
                 float colW = w * 0.17f;
                 for (int i = 0; i < Math.min(20, qs.size()); i++) {
                     Briefing.Quote q = qs.get(i);

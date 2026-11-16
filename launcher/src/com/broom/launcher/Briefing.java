@@ -50,7 +50,12 @@ final class Briefing {
                     "NESTLEIND.NS", "Nestlé India", "TCS.NS", "TCS", "INFY.NS", "Infosys", "ICICIBANK.NS", "ICICI Bank",
                     "BHARTIARTL.NS", "Airtel", "ITC.NS", "ITC", "LT.NS", "L&T", "SBIN.NS", "SBI", "BAJFINANCE.NS", "Bajaj Finance",
                     "MARUTI.NS", "Maruti", "SUNPHARMA.NS", "Sun Pharma", "BEL.NS", "BEL", "TMPV.NS", "Tata Motors PV",
-                    "ADANIENT.NS", "Adani Ent", "ASIANPAINT.NS", "Asian Paints"},
+                    "ADANIENT.NS", "Adani Ent", "ASIANPAINT.NS", "Asian Paints",
+                    // most-followed mid / small caps and new-age stocks
+                    "ETERNAL.NS", "Eternal", "TRENT.NS", "Trent", "SWIGGY.NS", "Swiggy", "PAYTM.NS", "Paytm",
+                    "POLICYBZR.NS", "PB Fintech", "JIOFIN.NS", "Jio Financial", "DIXON.NS", "Dixon", "POLYCAB.NS", "Polycab",
+                    "PERSISTENT.NS", "Persistent", "KAYNES.NS", "Kaynes", "BSE.NS", "BSE", "CDSL.NS", "CDSL",
+                    "MAZDOCK.NS", "Mazagon Dock", "SUZLON.NS", "Suzlon", "IRFC.NS", "IRFC", "INDIGO.NS", "IndiGo"},
             {"US tech & AI stocks", "NVDA", "Nvidia", "AAPL", "Apple", "GOOGL", "Alphabet", "MSFT", "Microsoft", "AMZN", "Amazon",
                     "META", "Meta", "TSLA", "Tesla", "AVGO", "Broadcom", "AMD", "AMD", "TSM", "TSMC", "MU", "Micron",
                     "SNDK", "SanDisk", "CRWV", "CoreWeave", "000660.KS", "SK Hynix", "005930.KS", "Samsung", "ORCL", "Oracle",
@@ -63,9 +68,34 @@ final class Briefing {
 
     /** Apply the user's watchlists (saved as JSON [[sym,name],...]) over the defaults. */
     static synchronized void loadLists(Context c) {
+        addNewDefaults(c, "wl_india", DEFAULT_INDIA, "ETERNAL.NS");
+        addNewDefaults(c, "wl_us", DEFAULT_US, null);   // only makes sure Alphabet is there
         GROUPS[WL_INDIA] = list(c, "wl_india", DEFAULT_INDIA);
         GROUPS[WL_US] = list(c, "wl_us", DEFAULT_US);
         listsLoaded = true;
+    }
+
+    /**
+     * A saved (edited) watchlist doesn't pick up new default stocks by itself. Once per release, add the
+     * defaults from {@code firstNew} onwards that the saved list doesn't have yet (anything removed later stays removed).
+     */
+    private static void addNewDefaults(Context c, String key, String[] def, String firstNew) {
+        String flag = key + "_merged_v16";
+        android.content.SharedPreferences p = Theme.prefs(c);
+        String js = p.getString(key, null);
+        if (js == null || p.getBoolean(flag, false)) return;
+        try {
+            JSONArray a = new JSONArray(js);
+            java.util.Set<String> have = new java.util.HashSet<>();
+            for (int i = 0; i < a.length(); i++) have.add(a.getJSONArray(i).getString(0));
+            boolean from = false;
+            for (int i = 1; i < def.length; i += 2) {
+                if (def[i].equals(firstNew)) from = true;
+                boolean always = def[i].equals("GOOGL") || def[i].equals("HAL.NS");
+                if ((from || always) && !have.contains(def[i])) { JSONArray x = new JSONArray(); x.put(def[i]); x.put(def[i + 1]); a.put(x); }
+            }
+            p.edit().putString(key, a.toString()).putBoolean(flag, true).apply();
+        } catch (Exception ignored) { }
     }
 
     private static String[] list(Context c, String key, String[] def) {
