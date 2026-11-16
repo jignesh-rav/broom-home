@@ -40,7 +40,16 @@ final class MarketAlerts {
 
     private void check() {
         String today = android.text.format.DateFormat.format("yyyy-MM-dd", System.currentTimeMillis()).toString();
-        if (!today.equals(day)) { day = today; level.clear(); }
+        if (!today.equals(day)) {
+            // what already popped up today survives a restart (update, reboot), so nothing repeats
+            day = today; level.clear();
+            android.content.SharedPreferences p = Theme.prefs(svc);
+            if (today.equals(p.getString("ma_day", ""))) try {
+                org.json.JSONObject o = new org.json.JSONObject(p.getString("ma_levels", "{}"));
+                java.util.Iterator<String> it = o.keys();
+                while (it.hasNext()) { String k = it.next(); level.put(k, o.getInt(k)); }
+            } catch (Exception ignored) { }
+        }
         float idx = WatchlistActivity.indexAlert(svc), stk = WatchlistActivity.stockAlert(svc);
         if (idx > 0) for (Briefing.Quote q : Briefing.quotes(svc, INDICES)) consider(q, idx, true);
         if (stk > 0)
@@ -55,6 +64,7 @@ final class MarketAlerts {
         if (lv == 0) return;
         if (prev != null && (prev == lv || (Integer.signum(prev) == Integer.signum(lv) && Math.abs(prev) >= Math.abs(lv)))) return;
         level.put(q.sym, lv);
+        Theme.prefs(svc).edit().putString("ma_day", day).putString("ma_levels", new org.json.JSONObject(level).toString()).apply();
         final boolean up = q.pct >= 0;
         final String head = (up ? "📈  " : "📉  ") + (index ? "MARKET MOVE" : "STOCK ALERT");
         final String line = String.format(java.util.Locale.US, "%s %s %.1f%%  ·  %s", q.name, up ? "up" : "down", Math.abs(q.pct), Briefing.price(q));

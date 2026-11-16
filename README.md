@@ -35,7 +35,7 @@ A full tour with the remote is in **[docs/FEATURES.md](docs/FEATURES.md)**.
 **Screensavers:** Nebula Drift, Aurora, Warp Speed, Rangoli Mandala, Minimal Clock, Facts & Quotes, Briefing, Panchang, photo packs (Monuments, Nature, Animals, Baby animals, Space, from Wikimedia featured pictures) and your own photos from a USB stick
 
 **Extras**
-- Live score pop-ups over any app or HDMI input (a wicket, every 50 runs, goals)
+- Pop-ups over any app or HDMI input: live scores (a wicket, every 50 runs, goals), market alerts, and optional updates every 15–60 min (market pulse, live score, weather heads-ups, top headline, Panchang, break reminder)
 - Market alerts when an index moves 1% or a watchlist stock moves 5%
 - Sleep timer, tick / click sounds, night mode for the screensaver
 - **Settings → Features** (or **Briefing → Customise**): switch off whole features you don't care about, such as markets, cricket, football, Panchang or any news section. Switched-off features are not downloaded and disappear from home, Briefing, the screensaver and pop-ups.

@@ -869,13 +869,53 @@ public class MainActivity extends Activity {
                 }).show();
     }
 
+    /** Quick settings → Pop-up updates: interval per type, quiet hours and a test run. */
+    private void pulseDialog() {
+        final int n = Pulse.KINDS.length;
+        String[] labels = new String[n + 2];
+        for (int i = 0; i < n; i++) labels[i] = Pulse.LABELS[i] + ": " + Pulse.describe(this, Pulse.KINDS[i]);
+        labels[n] = "Quiet hours 11 PM – 7 AM: " + (Pulse.quietHours(this) ? "On  (turn off)" : "Off  (turn on)");
+        labels[n + 1] = "Test all now (shows each type once)";
+        new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                .setTitle("Pop-up updates (over any app or HDMI)")
+                .setItems(labels, new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface d, int i) {
+                        if (i < n) { pulseInterval(Pulse.KINDS[i], Pulse.LABELS[i]); return; }
+                        if (i == n) {
+                            Pulse.setQuietHours(MainActivity.this, !Pulse.quietHours(MainActivity.this));
+                            pulseDialog();
+                            return;
+                        }
+                        Toast.makeText(MainActivity.this, Pulse.testAll()
+                                ? "Showing each pop-up in turn (bottom-right, about 10 s apart)"
+                                : "Pop-ups need the Broom button helper: re-run the installer", Toast.LENGTH_LONG).show();
+                    }
+                }).show();
+    }
+
+    private void pulseInterval(final String kind, String label) {
+        final int[] mins;
+        String[] names;
+        if (kind.equals(Pulse.PANCHANG)) { mins = new int[]{0, 1}; names = new String[]{"Off", "On (Rahu Kaal soon, good Choghadiya starts)"}; }
+        else if (kind.equals(Pulse.WELLNESS)) { mins = new int[]{0, 60, 90, 120}; names = new String[]{"Off", "After 1 hour", "After 1½ hours", "After 2 hours"}; }
+        else { mins = new int[]{0, 15, 30, 60}; names = new String[]{"Off", "Every 15 min", "Every 30 min", "Every hour"}; }
+        new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                .setTitle(label)
+                .setItems(names, new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface d, int w) {
+                        Pulse.setMinutes(MainActivity.this, kind, mins[w]);
+                        pulseDialog();
+                    }
+                }).show();
+    }
+
     private void quickSettings() {
         final boolean snd = Sounds.enabled(this);
         final String[] labels = {"Picture & TV options", "Sound", "Display", "Wi-Fi & network", "Apps",
                 "Themes", "Weather", "Screensaver", "Broom sounds: " + (snd ? "On  (turn off)" : "Off  (turn on)"), "All settings",
                 "TV stats & savings", powerLabel() + "  (switch)", "Briefing",
                 "Live score pop-ups: " + (ScorePopup.enabled(this) ? "On  (turn off)" : "Off  (turn on)"), "Watchlist & market alerts",
-                "Network monitor", sleepLabel(), "Features: choose what to show"};
+                "Network monitor", sleepLabel(), "Features: choose what to show", "Pop-up updates (market, cricket, weather, news…)"};
         new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
                 .setTitle("Quick settings")
                 .setItems(labels, new DialogInterface.OnClickListener() {
@@ -912,6 +952,7 @@ public class MainActivity extends Activity {
                                     @Override public void run() { lastFocusedPkg = "btn:settings"; rebuild(); refreshTicker(); }
                                 });
                                 return;
+                            case 18: pulseDialog(); return;
                             case 13: {
                                 boolean on = !ScorePopup.enabled(MainActivity.this);
                                 Theme.prefs(MainActivity.this).edit().putBoolean("score_popups", on).apply();

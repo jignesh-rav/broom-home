@@ -28,6 +28,7 @@ The **Settings** button opens a list:
 - **Broom sounds** on / off: the tick and click as you move around
 - **Power-on** switch: *Broom (or HDMI device that's on)* opens Broom when the TV turns on, unless an HDMI device such as a Fire TV or set-top box is on, in which case it opens that input (see [HDMI devices and power-on](#hdmi-devices-and-power-on-hdmi-cec)). *Last input* goes straight back to whatever was on before
 - **Live score pop-ups** on / off
+- **Pop-up updates**: market pulse, live cricket score, weather heads-ups, top headline, Panchang moments and a break reminder, each with its own interval, plus quiet hours and **Test all now** (see [Pop-ups](#pop-ups-over-any-app-or-hdmi-input))
 - **Sleep timer**: 15 min to 2 h, with a 1-minute warning. Any key cancels it
 - **Features: choose what to show**: tick boxes for Markets, Cricket scores, Football scores, Panchang, and each news category (Cricket, Football, Tech, AI, Space, Market news). Anything you untick is not downloaded and disappears from home, Briefing, the screensaver and pop-ups.
 
@@ -109,12 +110,28 @@ It also covers a common TV quirk: the device sends "switch to me" while the TV i
 
 ## Pop-ups (over any app or HDMI input)
 
-- **Cricket**: when an India / IPL match goes live, each wicket, and every 50 runs
-- **Football**: goals, kick-off and full time for big clubs
-- **Markets**: your watchlist alerts
-- **Sleep timer** warning
+A small card appears in the bottom-right corner over whatever is on: YouTube, Netflix, any app, or an HDMI input such as a Fire TV. It shows for about 10 seconds, then fades. It doesn't pause the video or take the remote. Nothing pops up while Broom's own home screen is showing, because it already shows all of this.
 
-Each card shows for about 10 seconds in the bottom-right corner, then fades.
+**When something happens:**
+- 🏏 **Cricket**: when an India / IPL match goes live, each wicket, and every 50 runs
+- ⚽ **Football**: goals, kick-off and full time for big clubs
+- 📈 **Markets**: an index moving 1%+ or a watchlist stock moving 5%+ (each level once a day, even across restarts)
+- 💤 **Sleep timer** warning
+
+**Pop-up updates on a rhythm** (Settings → **Pop-up updates**). Each type has its own interval or can be switched off:
+
+| Update | Default | What it shows |
+|---|---|---|
+| 📈 Market pulse | every 30 min, market hours only | Nifty and Sensex in Indian hours, S&P and Nasdaq in the US session, plus your watchlist's biggest mover |
+| 🏏 Live cricket score | every 15 min, only during India / IPL matches | The current score |
+| 🌦️ Weather heads-ups | checks every 30 min, only when there's news | Rain likely in the next 2 hours, unhealthy air (AQI 150 / 200 / 300), heat (feels like 40°+). Each once a day |
+| 📰 Top headline | every 30 min | The newest story from the news sections you follow, never repeated |
+| 🕉️ Panchang moments | off | 10 minutes before Rahu Kaal, and when a good Choghadiya (Amrit, Shubh, Labh) starts |
+| 🧘 Break reminder | off | After 1, 1½ or 2 hours of non-stop watching |
+
+- **Quiet hours** (on by default): no rhythm pop-ups from 11 PM to 7 AM.
+- **Test all now** shows every type once, about 10 seconds apart, so you can see them before you choose.
+- Switching off a section in **Features** (markets, cricket, Panchang, a news category) also stops its pop-ups.
 
 ## Network monitor and TV stats
 

@@ -37,6 +37,7 @@ public class KeyRemapService extends AccessibilityService {
     private ScorePopup popup;
     private MarketAlerts alerts;
     private NetMonitor net;
+    private Pulse pulse;
     private boolean sleepWarned;
     private final Runnable sleepCheck = new Runnable() {
         @Override public void run() {
@@ -64,6 +65,7 @@ public class KeyRemapService extends AccessibilityService {
     private final BroadcastReceiver demo = new BroadcastReceiver() {
         @Override public void onReceive(Context c, Intent i) {
             if ("com.broom.launcher.MARKET_DEMO".equals(i.getAction())) { if (alerts != null) alerts.demo(); }
+            else if ("com.broom.launcher.PULSE_TEST".equals(i.getAction())) Pulse.testAll();
             else if ("com.broom.launcher.SLEEP_TEST".equals(i.getAction()))
                 Theme.prefs(c).edit().putLong("sleep_at", System.currentTimeMillis() + 70000L).apply();
             else if (popup != null) popup.demo();
@@ -156,6 +158,8 @@ public class KeyRemapService extends AccessibilityService {
         popup.start();
         alerts = new MarketAlerts(this, popup);
         alerts.start();
+        pulse = new Pulse(this, popup);
+        pulse.start();
         net = new NetMonitor(this);
         net.start();
         // a timer left over from before this start (crash, update, standby) is discarded
@@ -165,6 +169,7 @@ public class KeyRemapService extends AccessibilityService {
         IntentFilter df = new IntentFilter("com.broom.launcher.SCORE_DEMO");
         df.addAction("com.broom.launcher.MARKET_DEMO");
         df.addAction("com.broom.launcher.SLEEP_TEST");
+        df.addAction("com.broom.launcher.PULSE_TEST");
         registerReceiver(demo, df, android.Manifest.permission.DUMP, null);
         if (android.os.SystemClock.elapsedRealtime() < 5 * 60 * 1000) powerOn(); // fresh boot
     }
@@ -174,6 +179,7 @@ public class KeyRemapService extends AccessibilityService {
         try { unregisterReceiver(demo); } catch (Exception ignored) { }
         if (popup != null) popup.stop();
         if (alerts != null) alerts.stop();
+        if (pulse != null) pulse.stop();
         if (net != null) net.stop();
         h.removeCallbacks(sleepCheck);
         super.onDestroy();
@@ -193,7 +199,7 @@ public class KeyRemapService extends AccessibilityService {
     @Override public void onAccessibilityEvent(AccessibilityEvent e) {
         if (e.getEventType() != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return;
         String pkg = String.valueOf(e.getPackageName());
-        if (!pkg.equals("android") && !pkg.equals("com.android.systemui")) { lastPkg = pkg; if (popup != null) popup.foreground = pkg; if (net != null) net.foreground = pkg; }
+        if (!pkg.equals("android") && !pkg.equals("com.android.systemui")) { lastPkg = pkg; if (popup != null) popup.foreground = pkg; if (pulse != null) pulse.foreground = pkg; if (net != null) net.foreground = pkg; }
         if (!"com.mitv.tvhome.atv".equals(pkg)) return;
         String cls = String.valueOf(e.getClassName());
         String simple = cls.substring(cls.lastIndexOf('.') + 1);
