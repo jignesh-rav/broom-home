@@ -31,7 +31,23 @@ On Windows you can also double-click `console\broom-console.cmd`. The page opens
 
 ## Your TV list
 
-Add TVs at the bottom of the Overview: a name and the TV's IP address. TVs already connected over ADB are suggested. The list is saved in `console/tvs.json`, which git ignores, as it does everything in `console/data/` (backups, screenshots, downloaded APKs). Give each TV a fixed IP address in your router, so the list stays right.
+The first time you start the Console, it adds every TV that adb is already connected to (for example the ones you just installed Broom on), named by model. Rename or add TVs at the bottom of the Overview: a name and the TV's IP address. TVs adb is connected to but that aren't in the list yet are offered as one-click suggestions. Give each TV a fixed IP address in your router, so the list stays right.
+
+The page's address includes a key, and the key stays the same each time you start the Console, so you can bookmark it. `--new-key` makes a new one; old bookmarks then stop working.
+
+## Where things are kept
+
+There's no database. Everything is a small file on your computer, and git ignores all of it:
+
+| File | What's in it |
+|---|---|
+| `console/tvs.json` | The TV list: name and IP address |
+| `console/data/key.txt` | The page's key |
+| `console/data/backups/<tv>/` | Settings backups, one JSON file each |
+| `console/data/shots/` | Screenshots |
+| `console/data/apk/` | Release APKs the Console downloaded |
+
+Each TV's settings stay on the TV, inside Broom. The Console doesn't keep a copy: it reads them over ADB when you open a tab and writes back only what you change. Status (memory, network, DNS) is fetched fresh every time.
 
 ## Safety
 - The page is served to this computer only (`127.0.0.1`), never to your network.

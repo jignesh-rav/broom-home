@@ -11,8 +11,13 @@ listens on the TVs. The page is served to this computer only (127.0.0.1), and ev
 needs the random key in the page's address, so other devices and other web pages can't use it.
 It only runs fixed actions: there is no way to type an ADB command into it.
 
-The TV list is kept in console/tvs.json (made from the page, kept out of git). Settings backups,
-screenshots and downloaded APKs go to console/data/. Python 3.7+ standard library only.
+No database: everything is a small file, all kept out of git.
+  console/tvs.json        the TV list (filled from the TVs adb already knows on the first run; edit it in the page)
+  console/data/key.txt    the page's key, so a bookmarked address keeps working (--new-key makes a new one)
+  console/data/backups/   settings backups, one JSON file per backup
+  console/data/shots/     screenshots;  console/data/apk/  downloaded release APKs
+Each TV's own settings stay on the TV, in Broom; the Console reads and writes them over ADB when asked.
+Python 3.7+ standard library only.
 """
 import argparse
 import glob
@@ -46,7 +51,7 @@ NEEDS_STATUS = (18, 3)          # STATUS / RELOAD exist from Broom 18.3 (older o
 NO_WINDOW = 0x08000000 if os.name == "nt" else 0
 
 ADB = None
-KEY = secrets.token_urlsafe(24)
+KEY = ""                        # set in main(): kept in console/data/key.txt
 PORT = 8642
 
 # --------------------------------------------------------------------------- settings Broom shares
@@ -530,13 +535,51 @@ def list_backups(tv):
     return {"backups": out}
 
 
-def adb_suggestions(tvs):
-    known = {t["serial"] for t in tvs}
+def adb_network_devices():
+    """TVs adb is already connected to over Wi-Fi: [(serial, name)]."""
     try:
-        out = adb(["devices"], timeout=8)[1]
+        out = adb(["devices", "-l"], timeout=8)[1]
     except Fail:
         return []
-    return [l.split()[0] for l in out.splitlines()[1:] if re.match(r"^\d+\.\d+\.\d+\.\d+:\d+\s", l) and l.split()[0] not in known]
+    found = []
+    for l in out.splitlines()[1:]:
+        if re.match(r"^\d+\.\d+\.\d+\.\d+:\d+\s+device\b", l):
+            serial = l.split()[0]
+            m = re.search(r"model:(\S+)", l)
+            found.append((serial, m.group(1).replace("_", " ") if m else serial.split(":")[0]))
+    return found
+
+
+def adb_suggestions(tvs):
+    known = {t["serial"] for t in tvs}
+    return [{"host": s[:-5] if s.endswith(":5555") else s, "name": n} for s, n in adb_network_devices() if s not in known]
+
+
+def first_run_tvs():
+    """No tvs.json yet: start the list with the TVs adb already knows, so nothing has to be typed."""
+    if os.path.exists(CONF) or not ADB:
+        return
+    found = adb_network_devices()
+    if found:
+        save_tvs([{"name": n, "host": s[:-5] if s.endswith(":5555") else s} for s, n in found])
+        print("Added %d TV%s that adb already knows: %s" % (len(found), "" if len(found) == 1 else "s", ", ".join(n for _, n in found)))
+
+
+def load_key(new):
+    path = os.path.join(DATA, "key.txt")
+    if not new:
+        try:
+            with open(path, encoding="utf-8") as f:
+                k = f.read().strip()
+            if re.match(r"^[A-Za-z0-9_-]{24,}$", k):
+                return k
+        except OSError:
+            pass
+    k = secrets.token_urlsafe(24)
+    os.makedirs(DATA, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(k)
+    return k
 
 
 # --------------------------------------------------------------------------- web
@@ -593,7 +636,7 @@ class Handler(BaseHTTPRequestHandler):
                                        "adb_hint": None if ADB else HINTS["noadb"], "suggest": adb_suggestions(tvs) if ADB else [],
                                        "local_apk": os.path.isfile(LOCAL_APK), "schema": SCHEMA})
             if u.path == "/api/latest":
-                return self.send(200, latest_release())
+                return self.send(200, latest_release(force=(q.get("force") or [""])[0] == "1"))
             tid = (q.get("tv") or [""])[0]
             if u.path == "/api/status":
                 return self.send(200, tv_status(tv_by_id(tid)))
@@ -649,12 +692,15 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
-    global ADB, PORT
+    global ADB, PORT, KEY
     ap = argparse.ArgumentParser(description="Broom Console: check and control your TVs from one page.")
     ap.add_argument("--port", type=int, default=8642)
     ap.add_argument("--no-open", action="store_true", help="don't open the browser")
+    ap.add_argument("--new-key", action="store_true", help="make a new page key (old bookmarks stop working)")
     a = ap.parse_args()
     ADB = find_adb()
+    KEY = load_key(a.new_key)
+    first_run_tvs()
     server = None
     for p in range(a.port, a.port + 10):
         try:
