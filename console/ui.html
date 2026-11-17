@@ -561,7 +561,14 @@ async function renderBackups() {
 }
 
 window.addEventListener("beforeunload", (e) => { if (!$("saveBar").hidden) { e.preventDefault(); e.returnValue = ""; } });
-boot();
+if (location.protocol === "file:" || !KEY) {
+  // opened as a file (or without the key): the page only works when broom-console.py serves it
+  $("latest").textContent = "";
+  $("adbHint").hidden = false;
+  $("adbHint").replaceChildren("This page only works when Broom Console serves it. Start it with ",
+    el("code", {}, "python console/broom-console.py"), " (Windows: double-click ", el("code", {}, "console\\broom-console.cmd"),
+    "). It opens the right address in your browser, starting with http://127.0.0.1:8642/?k=");
+} else boot();
 </script>
 </body>
 </html>
