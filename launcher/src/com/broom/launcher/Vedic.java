@@ -10,7 +10,7 @@ import java.util.TimeZone;
 /**
  * Full day Panchang for a place: sunrise/sunset (NOAA), vaar, tithi/nakshatra with end times, yoga, karana,
  * Sun/Moon rashi, ritu, Vikram & Shaka Samvat, Rahu Kaal, Yamaganda, Gulika, Abhijit, day/night Choghadiya,
- * and upcoming festivals. Pure maths, offline; place = weather location (default Mumbai).
+ * and upcoming festivals. Pure maths, offline; place = weather location (default: central India).
  */
 final class Vedic {
     static final String[] VAAR = {"Ravivar", "Somvar", "Mangalvar", "Budhvar", "Guruvar", "Shukravar", "Shanivar"};
@@ -47,7 +47,7 @@ final class Vedic {
         android.content.SharedPreferences p = Theme.prefs(c);
         if (p.contains("wx_lat"))
             return new double[]{Double.longBitsToDouble(p.getLong("wx_lat", 0)), Double.longBitsToDouble(p.getLong("wx_lon", 0))};
-        return new double[]{19.07, 72.88};   // Mumbai
+        return new double[]{21.15, 79.09};   // Nagpur, near the centre of India, until an area is set
     }
 
     static Day today(Context c) { return of(c, System.currentTimeMillis()); }

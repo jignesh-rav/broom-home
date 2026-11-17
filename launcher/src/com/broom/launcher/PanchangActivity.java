@@ -165,7 +165,7 @@ public class PanchangActivity extends Activity {
 
     private String placeName() {
         String c = Theme.prefs(this).getString("wx_city", "");
-        return c.isEmpty() ? "Mumbai" : c;
+        return c.isEmpty() ? "central India (set your area in Weather)" : c;
     }
 
     private String whenTxt(Panchang p, long t, long now) {

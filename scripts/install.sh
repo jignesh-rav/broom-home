@@ -173,6 +173,7 @@ EOF
 fi
 
 if [ $DNS = 1 ]; then
+  echo "Turning on AdGuard private DNS (Broom switches to Cloudflare while AdGuard is down)..."
   sh_ "settings put global private_dns_mode hostname"
   sh_ "settings put global private_dns_specifier dns.adguard-dns.com"
 fi

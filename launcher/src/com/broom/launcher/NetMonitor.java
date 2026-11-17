@@ -19,10 +19,15 @@ import java.util.List;
  * Network monitor (runs in the always-on helper service):
  *  - every 30 min: reachability + latency probe (HTTP 204, ~0 bytes), Wi-Fi signal and link speed
  *  - every 1 h, only while the TV is idle: 5 MB download speed test (up to ~120 MB/day); also on demand
+ *  - DNS backup: Android's Private DNS takes one name only, so when it is AdGuard and AdGuard can't be
+ *    reached (but Cloudflare can), it switches to Cloudflare, and back to AdGuard once AdGuard answers again.
+ *    After a failed probe the next one runs in 2 min, so an outage is caught quickly.
  * Keeps 24 h of samples on disk for the Network screen and the home status line.
  */
 final class NetMonitor {
-    static final long PROBE_MS = 30 * 60000L, SPEED_MS = 3600000L;
+    static final long PROBE_MS = 30 * 60000L, RETRY_MS = 2 * 60000L, SPEED_MS = 3600000L;
+    static final String DNS_MAIN = "dns.adguard-dns.com", DNS_BACKUP = "one.one.one.one";
+    private static final String[] MAIN_IPS = {"94.140.14.14", "94.140.15.15"}, BACKUP_IPS = {"1.1.1.1", "1.0.0.1"};
     static final int KEEP = 200;   // 24 h of 30-minute samples plus on-demand checks (older rows are dropped by age)
 
     static final class Sample { long t; boolean ok; int lat, rssi, link; }
@@ -44,13 +49,13 @@ final class NetMonitor {
             if (!running) return;
             new Thread(new Runnable() {
                 @Override public void run() {
-                    probe(c);
+                    Sample s = probe(c);
                     long last = lastSpeedTime(c);
                     boolean idle = foreground == null || foreground.equals(c.getPackageName()) || foreground.contains("dream");
-                    if (idle && System.currentTimeMillis() - last > SPEED_MS - 2 * 60000L) speedTest(c);   // small tolerance: tests run on a probe tick
+                    if (s.ok && idle && System.currentTimeMillis() - last > SPEED_MS - 2 * 60000L) speedTest(c);   // small tolerance: tests run on a probe tick
+                    h.postDelayed(loop, s.ok ? PROBE_MS : RETRY_MS);
                 }
             }).start();
-            h.postDelayed(this, PROBE_MS);
         }
     };
 
@@ -78,7 +83,39 @@ final class NetMonitor {
             } catch (Exception e) { s.ok = false; break; }
         }
         append(c, "net_samples.csv", s.t + "," + (s.ok ? 1 : 0) + "," + s.lat + "," + s.rssi + "," + s.link, KEEP);
+        try { dnsBackup(c, s.ok); } catch (Exception ignored) { }
         return s;
+    }
+
+    /** AdGuard -> Cloudflare when AdGuard is down, and back. Only touches a Private DNS that Broom set up. */
+    static void dnsBackup(Context c, boolean internetOk) {
+        android.content.ContentResolver cr = c.getContentResolver();
+        String mode = android.provider.Settings.Global.getString(cr, "private_dns_mode");
+        String host = android.provider.Settings.Global.getString(cr, "private_dns_specifier");
+        if (!"hostname".equals(mode) || host == null) return;
+        android.content.SharedPreferences p = Theme.prefs(c);
+        if (DNS_MAIN.equals(host)) {
+            if (internetOk || reachable(MAIN_IPS) || !reachable(BACKUP_IPS)) return;   // AdGuard fine, or the whole internet is down
+            android.provider.Settings.Global.putString(cr, "private_dns_specifier", DNS_BACKUP);
+            p.edit().putBoolean("dns_on_backup", true).putLong("dns_switch_time", System.currentTimeMillis()).apply();
+            append(c, "dns_log.csv", System.currentTimeMillis() + ",backup", 50);
+        } else if (DNS_BACKUP.equals(host) && p.getBoolean("dns_on_backup", false)) {
+            if (!reachable(MAIN_IPS)) return;
+            android.provider.Settings.Global.putString(cr, "private_dns_specifier", DNS_MAIN);
+            p.edit().putBoolean("dns_on_backup", false).putLong("dns_switch_time", System.currentTimeMillis()).apply();
+            append(c, "dns_log.csv", System.currentTimeMillis() + ",main", 50);
+        }
+    }
+
+    /** DNS-over-TLS port open on any of these addresses (by IP, so it works while DNS itself is broken). */
+    private static boolean reachable(String[] ips) {
+        for (String ip : ips) {
+            java.net.Socket so = new java.net.Socket();
+            try { so.connect(new java.net.InetSocketAddress(ip, 853), 4000); return true; }
+            catch (Exception ignored) { }
+            finally { try { so.close(); } catch (Exception ignored) { } }
+        }
+        return false;
     }
 
     /** Downloads ~5 MB and returns Mbps (or -1). */

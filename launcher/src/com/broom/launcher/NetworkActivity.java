@@ -106,7 +106,7 @@ public class NetworkActivity extends Activity {
         cards.addView(stat("Wi-Fi signal", now == null ? "…" : NetMonitor.barsText(now.rssi) + "  " + now.rssi + " dBm", th.text,
                 now == null ? "" : quality(now.rssi)), lp());
         cards.addView(stat("Link speed", now == null || now.link <= 0 ? "…" : now.link + " Mbps", th.text, "TV ↔ router"), lp());
-        cards.addView(stat("Latency now", now == null || !now.ok ? "—" : now.lat + " ms", th.text, "to Google"), lp());
+        cards.addView(stat("Latency now", now == null || !now.ok ? "—" : now.lat + " ms", th.text, "to Google · " + dnsName()), lp());
         col.addView(cards);
 
         // ---------- 24 h
@@ -186,6 +186,16 @@ public class NetworkActivity extends Activity {
         }
         if (start != 0) out.add(new long[]{start, last});
         return out;
+    }
+
+    /** Which Private DNS is in use; Cloudflare is the automatic backup when AdGuard is down (see NetMonitor). */
+    private String dnsName() {
+        String mode = android.provider.Settings.Global.getString(getContentResolver(), "private_dns_mode");
+        String host = android.provider.Settings.Global.getString(getContentResolver(), "private_dns_specifier");
+        if (!"hostname".equals(mode) || host == null) return "router DNS";
+        if (NetMonitor.DNS_MAIN.equals(host)) return "AdGuard DNS";
+        if (NetMonitor.DNS_BACKUP.equals(host)) return Theme.prefs(this).getBoolean("dns_on_backup", false) ? "Cloudflare (backup)" : "Cloudflare DNS";
+        return host;
     }
 
     private View stat(String label, String value, int color, String note) {

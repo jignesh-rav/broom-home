@@ -8,7 +8,7 @@ Nothing here needs root or an account. Every change can be undone.
 
 **Works on:** TVs and boxes running **Android TV** (Xiaomi, Sony, TCL, OnePlus, Philips, Nokia, Vu, Nvidia Shield, Mi Box…) or **Google TV** (Chromecast with Google TV and Google TV sets). **Not for:** Samsung (Tizen), LG (webOS), Roku or Fire TV. Tested so far on a Xiaomi Mi TV 4A/4C Pro and a TCL 4K Android TV (both Android TV 9); other devices are expected to work but are untested. The full list, with Google TV notes and the few Xiaomi-only extras, is in **[docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)**.
 
-![Broom Home, Kerala Backwaters theme](docs/screenshots/01-home-kerala.jpg)
+![Broom Home: clock, weather, market ticker, favourite apps, the icon rail on the left and the Settings gear](docs/screenshots/01-home.jpg)
 
 **Fastest install:** turn on [ADB over Wi-Fi](#step-1-turn-on-adb-over-wi-fi-on-the-tv), then [ask Claude to do it](#path-a-let-claude-install-it-fastest).
 
@@ -50,11 +50,17 @@ All data comes from free public feeds that need no API keys: Open-Meteo, Yahoo F
 
 | | |
 |---|---|
-| ![Neon City theme](docs/screenshots/02-home-neon.jpg) Neon City theme | ![Diwali decorations](docs/screenshots/03-home-diwali.jpg) Festival day: Diwali |
-| ![Theme gallery](docs/screenshots/04-themes.jpg) Theme gallery | ![Briefing](docs/screenshots/05-briefing.jpg) Briefing: markets, scores, news |
-| ![Features tick-list](docs/screenshots/06-features.jpg) Settings → Features | ![Weather](docs/screenshots/07-weather.jpg) Weather and walk / jog planner |
-| ![Panchang](docs/screenshots/08-panchang.jpg) Panchang, worked out offline | ![Quick settings](docs/screenshots/12-quick-settings.jpg) Quick settings |
-| ![Photo screensaver](docs/screenshots/09-screensaver-photos.jpg) Screensaver: Animals photo pack | ![Mandala screensaver](docs/screenshots/10-screensaver-mandala.jpg) Screensaver: Rangoli Mandala |
+| ![Kerala Backwaters theme](docs/screenshots/02-home-kerala.jpg) Kerala Backwaters theme | ![Neon City theme](docs/screenshots/03-home-neon.jpg) Neon City theme |
+| ![Diwali decorations](docs/screenshots/04-home-diwali.jpg) Festival day: Diwali | ![Theme gallery](docs/screenshots/05-themes.jpg) Theme gallery |
+| ![Briefing](docs/screenshots/06-briefing.jpg) Briefing: markets, scores, news | ![Regional news](docs/screenshots/07-briefing-regional.jpg) Regional tab: Hindi, Gujarati and Marathi news |
+| ![Weather](docs/screenshots/08-weather.jpg) Weather and walk / jog planner | ![Panchang](docs/screenshots/09-panchang.jpg) Panchang in Gujarati, worked out offline |
+| ![Quick settings](docs/screenshots/10-quick-settings.jpg) Quick settings (the gear) | ![Features tick-list](docs/screenshots/11-features.jpg) Settings → Features |
+| ![Still watching?](docs/screenshots/12-still-watching.jpg) Still watching? before standby | ![Network monitor](docs/screenshots/13-network.jpg) Network monitor, with the DNS in use |
+| ![Photo screensaver](docs/screenshots/14-screensaver-photos.jpg) Screensaver: Animals photo pack | ![Desi Clock screensaver](docs/screenshots/15-screensaver-desi.jpg) Screensaver: Desi Clock (Marathi) |
+| ![Sayings screensaver](docs/screenshots/16-screensaver-sayings.jpg) Screensaver: Sayings, with meaning | ![Mandala screensaver](docs/screenshots/17-screensaver-mandala.jpg) Screensaver: Rangoli Mandala |
+| ![Aurora screensaver](docs/screenshots/18-screensaver-aurora.jpg) Screensaver: Aurora | |
+
+The location and Wi-Fi name are blurred in these screenshots.
 
 ## Install: do I need to build anything?
 
@@ -161,7 +167,7 @@ Then take the tour in **[docs/FEATURES.md](docs/FEATURES.md)**.
 | `-DebloatPreview` | `--debloat-preview` | Only show what Step 2 would switch off on your TV; change nothing |
 | `-NoDebloat` | `--no-debloat` | Skip Step 2: install Broom only and leave every other app as it is |
 | `-Debloat` | `--debloat` | Step 2 without questions: switch off the safe **and** the optional packages. Delete lines from the lists first to keep something |
-| `-AdBlockDns` | `--adblock-dns` | AdGuard private DNS: blocks ads and trackers for the whole TV |
+| `-AdBlockDns` | `--adblock-dns` | AdGuard private DNS: blocks ads and trackers for the whole TV. If AdGuard is down, Broom switches to Cloudflare until it's back |
 | `-Apk path\to.apk` | `APK=path/to.apk ./install.sh …` | Use an APK you already have instead of downloading |
 
 **After a TV system update**, run the same command again. It's safe to repeat and only fixes what's missing.

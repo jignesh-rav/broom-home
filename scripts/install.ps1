@@ -186,7 +186,7 @@ if ($NoDebloat) {
 }
 
 if ($AdBlockDns) {
-    Write-Host "Turning on AdGuard private DNS..."
+    Write-Host "Turning on AdGuard private DNS (Broom switches to Cloudflare while AdGuard is down)..."
     Sh "settings put global private_dns_mode hostname" | Out-Null
     Sh "settings put global private_dns_specifier dns.adguard-dns.com" | Out-Null
 }

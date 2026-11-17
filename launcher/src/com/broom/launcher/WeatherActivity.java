@@ -366,7 +366,7 @@ public class WeatherActivity extends Activity {
     private void askArea() {
         final EditText in = new EditText(this);
         in.setSingleLine(true);
-        in.setHint("Area, city, or lat, lon (e.g. Powai Mumbai or 19.12, 72.91)");
+        in.setHint("Area, city, or lat, lon (e.g. Connaught Place Delhi or 28.63, 77.22)");
         new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
                 .setTitle("Weather area")
                 .setView(in)
@@ -387,7 +387,7 @@ public class WeatherActivity extends Activity {
     private void pickPlace(String q, final java.util.List<Weather.Place> places) {
         if (isFinishing()) return;
         if (places.isEmpty()) {
-            Toast.makeText(this, "No match for \"" + q + "\" - try adding the city, e.g. \"Powai Mumbai\"", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "No match for \"" + q + "\" - try adding the city, e.g. \"Connaught Place Delhi\"", Toast.LENGTH_LONG).show();
             return;
         }
         String[] names = new String[places.size()];

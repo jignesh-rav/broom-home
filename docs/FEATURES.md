@@ -135,10 +135,11 @@ A small card appears in the bottom-right corner over whatever is on: YouTube, Ne
 
 ## Network monitor and TV stats
 
-- **Network monitor** checks the connection every 2 minutes and shows:
+- **Network monitor** checks the connection every 30 minutes (every 2 minutes while it's down) and shows:
   - latency chart, outages and 24 h uptime
-  - Wi-Fi signal and link speed
-  - a speed test every 3 hours when the TV is idle, or **Run speed test now**
+  - Wi-Fi signal, link speed and the DNS in use
+  - a speed test every hour when the TV is idle, or **Run speed test now**
+- **DNS backup:** Android TV takes only one Private DNS name. With the ad-blocking DNS on (AdGuard), Broom switches the TV to Cloudflare (`one.one.one.one`) if AdGuard stops answering, and back to AdGuard once it answers again. It never touches a DNS you set yourself.
 - **TV stats & savings**: memory and storage now, the biggest memory users, and all packages. The "before" numbers come from the Xiaomi Mi TV this was built on, not from your TV, unless Claude has rebuilt the page for your TV (see [COMPATIBILITY.md](COMPATIBILITY.md#on-non-xiaomi-tvs-whats-the-same-and-what-needs-extra-steps)).
 
 ## If something goes wrong

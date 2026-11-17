@@ -24,7 +24,7 @@ Broom is plain Java, about 8,000 lines with no libraries, and each screen has it
 | Festival days | `Panchang.java` | `festival()` (tithi-based) |
 | Festival decorations | `Festive.java` | `kind()`, `draw()`, `greeting()` |
 | Panchang language (Gujarati amanta by default) | `Panchang.java`, `Vedic.java` | `gujarati()`, `MONTH_GU`, `VAAR_GU` |
-| Fallback location when there is none | `Vedic.java` | `return new double[]{19.07, 72.88}` |
+| Fallback location when there is none | `Vedic.java` | `return new double[]{21.15, 79.09}` (central India) |
 | Photo screensaver searches | `Photos.java` | search terms per pack, `BLOCK` (words to filter out) |
 | Animated screensavers | `DreamView.java`, `Nebula.java` | `MODES`, one class per style |
 | Weather and the walk / jog score | `Weather.java` | `comfort()` |
