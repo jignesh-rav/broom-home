@@ -1,16 +1,26 @@
 #!/bin/bash
-# undo.sh - re-enable everything in debloat-list.txt, restore the stock launcher/screensaver, remove Broom.
+# undo.sh - put the TV back: turn on everything in debloat-list.txt and every debloat-<brand>.txt,
+# restore the stock launcher and screensaver, switch off the DNS ad-blocker and remove Broom.
 #   ./undo.sh 192.168.1.50              full undo
-#   ./undo.sh 192.168.1.50 --keep-broom re-enable packages only
+#   ./undo.sh 192.168.1.50 --keep-broom turn the debloated packages back on only
 TV="${1:?usage: ./undo.sh <tv-ip> [--keep-broom]}"
 case "$TV" in *:*) ;; *) TV="$TV:5555";; esac
 HERE="$(cd "$(dirname "$0")" && pwd)"
 sh_() { adb -s "$TV" shell "$1" 2>/dev/null; }
 adb connect "$TV"
-sed 's/#.*//' "$HERE/debloat-list.txt" | while read -r p; do [ -n "$p" ] && sh_ "pm enable $p" >/dev/null; done
+echo "Turning the debloated packages back on..."
+for f in "$HERE"/debloat-*.txt; do
+  [ -f "$f" ] || continue
+  sed 's/#.*//' "$f" | tr -d ' \t\r' | while read -r p; do
+    [ -n "$p" ] || continue
+    sh_ "cmd package install-existing $p" >/dev/null   # brings back a package removed for the user ("remove-for-user")
+    sh_ "pm enable $p" >/dev/null
+  done
+done
 sh_ "settings delete global private_dns_mode"
 sh_ "settings delete global private_dns_specifier"
 if [ "${2:-}" != "--keep-broom" ]; then
+  sh_ "cmd package install-existing com.google.android.tvlauncher" >/dev/null   # removed for the user on TCL
   sh_ "pm enable com.google.android.tvlauncher" >/dev/null
   sh_ "pm enable com.google.android.apps.tv.launcherx" >/dev/null   # Google TV home
   sh_ "cmd package set-home-activity --user 0 com.google.android.tvlauncher/.MainActivity"

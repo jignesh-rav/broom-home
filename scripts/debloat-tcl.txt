@@ -1,0 +1,35 @@
+# TCL Android TV extras. The installer uses this list on TCL TVs, on top of debloat-list.txt.
+# Tested on a 2018 TCL 4K "BeyondTV" (Android TV 9, Realtek). Packages missing on your TV are skipped.
+#
+# Sections: lines under a "# --- optional" heading are asked about separately (default: keep).
+# "remove-for-user": TCL switches this package back on at every boot if it's only disabled, so the
+# installer removes it for your user instead (pm uninstall -k --user 0). It stays on the TV and undo
+# brings it back (cmd package install-existing).
+#
+# Never listed (inputs, HDMI, remote, picture and sound need them):
+#   com.tcl.tv, com.tcl.tvinput, com.tcl.framework.custom, com.tcl.keycustomfunctionservice,
+#   com.tcl.tcl_bt_rcu_service, com.tcl.settings
+
+# --- TCL telemetry, promos and extras
+com.tcl.bi                              # TCL usage analytics
+com.tcl.messagebox                      # TCL message and promo box
+com.tcl.esticker                        # shop-demo sticker
+com.tcl.showmode                        # shop-demo mode
+com.tcl.waterfall.overseas              # TCL content and ad rows
+com.tcl.keyhelp                         # remote key help overlay
+com.tcl.notereminder                    # remove-for-user: TCL reminders
+com.tcl.copydatatotv                    # copy-data-to-TV helper
+com.google.android.leanbacklauncher     # old Android TV home, unused with Broom
+com.google.android.music                # Google Play Music (shut down by Google)
+
+# --- optional: your call
+com.tcl.MultiScreenInteraction_TV       # TCL phone-to-TV sharing (Chromecast keeps working)
+com.tcl.smartalexa                      # remove-for-user: Alexa integration
+com.tcl.assistant                       # TCL assistant
+com.tcl.appmarket2                      # TCL app store (the Play Store stays)
+com.tcl.usercenter                      # remove-for-user: TCL account
+com.tcl.samba                           # network folder (SMB) browser
+com.tcl.videocall                       # video calling (needs a camera)
+com.facebook.katana                     # Facebook preload
+com.tcl.tv.tclhome_master               # remove-for-user: TCL Home screen; Broom replaces it
+com.tcl.tv.tclhome_passive              # remove-for-user: TCL Home helper

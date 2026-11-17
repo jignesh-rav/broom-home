@@ -30,7 +30,9 @@ From the repo's `scripts` folder:
 | | Windows (PowerShell) | macOS / Linux / Git Bash |
 |---|---|---|
 | Install Broom | `.\install.ps1 -Tv 192.168.1.50` | `./install.sh 192.168.1.50` |
-| + debloat | `.\install.ps1 -Tv 192.168.1.50 -Debloat` | `./install.sh 192.168.1.50 --debloat` |
+| Preview the debloat only | `.\install.ps1 -Tv 192.168.1.50 -DebloatPreview` | `./install.sh 192.168.1.50 --debloat-preview` |
+| Install without debloat | add `-NoDebloat` | add `--no-debloat` |
+| Debloat without questions (safe + optional) | add `-Debloat` | add `--debloat` |
 | + ad-blocking DNS | add `-AdBlockDns` | add `--adblock-dns` |
 | Use a downloaded APK | add `-Apk ..\BroomHome.apk` | prefix `APK=../BroomHome.apk` |
 | Undo all | `.\undo.ps1 -Tv 192.168.1.50` | `./undo.sh 192.168.1.50` |
@@ -40,7 +42,7 @@ From the repo's `scripts` folder:
 
 **macOS / Linux:** if you get "permission denied", run `bash install.sh 192.168.1.50`.
 
-The installer does the following:
+The installer runs two steps. **Step 1** sets up Broom:
 
 | Step | Why |
 |---|---|
@@ -50,7 +52,15 @@ The installer does the following:
 | Storage | Screensaver photos from a USB stick |
 | `WRITE_SETTINGS`, usage access | Screensaver timer and the "Recently used" row |
 | Accessibility service "Broom button helper" | Shows the pop-ups and the sleep timer. On Xiaomi it also sends PatchWall's extra home screens back to Broom; PatchWall stays installed because it owns the input-source pop-up |
-| Sets Broom as Home and screensaver, disables the stock Android TV launcher | |
+| Sets Broom as Home and screensaver, disables the stock Android TV launcher | On TCL the stock launcher is removed for the user instead, because TCL switches it back on at every boot |
+
+**Step 2 debloats the TV.** It reads [`debloat-list.txt`](../scripts/debloat-list.txt) plus the list for your brand (`debloat-tcl.txt` on a TCL), skips packages that aren't on your TV or are already off, and shows the rest:
+- **Safe:** telemetry, ad rows and apps a TV can't use. *Switch off the N safe ones? [Y/n]*
+- **Optional:** your call. Switch off **a**ll, **n**one (the default) or **c**hoose one by one.
+
+Packages are only switched off (`pm disable-user`), never deleted. The few marked `remove-for-user` are removed for your user (`pm uninstall -k --user 0`), because the TV turns them back on at boot. The remote, HDMI, picture, sound, voice, Chromecast, the Play Store and system updates are never on the lists. At the end the installer offers to restart the TV, which frees the memory. Every package is explained in [DEBLOAT.md](DEBLOAT.md), and `undo` turns all of it back on.
+
+Run by a script or by Claude (no terminal to answer in), Step 2 switches off the safe group only, unless you pass `-NoDebloat` or `-Debloat`.
 
 ## No computer? Use an Android phone
 

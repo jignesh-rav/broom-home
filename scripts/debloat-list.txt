@@ -1,7 +1,10 @@
-# Packages that are safe to DISABLE. Written for Xiaomi Mi TVs (PatchWall, Android TV 9);
-# on other TVs, any package that isn't installed is simply skipped.
-# Disabled = switched off, not deleted. `undo` turns every one back on.
-# Delete or comment out (#) any line you want to keep. Packages missing on your TV are skipped.
+# Packages that are safe to DISABLE. The installer uses this list on every TV (step 2 of setup).
+# Written for Xiaomi Mi TVs (PatchWall, Android TV 9); the Google ones apply to any Android TV.
+# Brand extras live in debloat-<brand>.txt (for example debloat-tcl.txt) and are added automatically.
+# Packages missing on your TV are skipped. Disabled = switched off, not deleted. `undo` turns every one back on.
+#
+# Sections: lines under a "# --- optional" heading are asked about separately (default: keep).
+# Delete or comment out (#) any line you never want switched off.
 #
 # Never listed (remote, HDMI, voice, casting, Play Store, updates must keep working):
 #   com.droidlogic.*, com.android.bluetooth, com.google.android.tv.remote.service, com.android.tv,
@@ -9,25 +12,25 @@
 #   com.xiaomi.mitv.updateservice, com.mitv.tvhome.atv (PatchWall: it owns the input-source pop-up)
 
 # --- telemetry and ads
-com.miui.tv.analytics
-com.xiaomi.statistic
-com.google.android.feedback
-com.google.android.tv.bugreportsender
-com.mitv.tvhome.mitvplus
-com.google.android.tvrecommendations
-com.google.android.leanbacklauncher.recommendations
-com.xm.webcontent
+com.miui.tv.analytics                   # Xiaomi analytics
+com.xiaomi.statistic                    # Xiaomi statistics / telemetry
+com.google.android.feedback             # Google feedback reporter
+com.google.android.tv.bugreportsender   # bug report uploader
+com.mitv.tvhome.mitvplus                # Mi TV+ ad / content channels
+com.google.android.tvrecommendations    # recommendation / ad rows on the stock home
+com.google.android.leanbacklauncher.recommendations  # old recommendations service
+com.xm.webcontent                       # Xiaomi web promos
 
 # --- unused on a TV
-com.xiaomi.mitv.handbook
-com.xiaomi.android.TV.audio
-com.android.camera2
-com.android.gallery3d
-com.android.printspooler
-com.android.smspush
-com.google.android.syncadapters.calendar
+com.xiaomi.mitv.handbook                # user manual
+com.xiaomi.android.TV.audio             # factory audio test tool
+com.android.camera2                     # camera (a TV has none)
+com.android.gallery3d                   # AOSP gallery
+com.android.printspooler                # printing
+com.android.smspush                     # SMS / WAP push (no SIM)
+com.google.android.syncadapters.calendar  # calendar sync
 
-# --- optional: your call (comment out to keep)
+# --- optional: your call (asked separately; delete a line to never be asked)
 com.google.android.backdrop            # Google ambient screensaver; Broom has its own
 com.google.android.youtube.tvkids      # YouTube Kids
 com.xiaomi.mimusic2                    # Mi Music

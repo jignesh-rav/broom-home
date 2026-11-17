@@ -107,20 +107,24 @@ To turn this off again after setup, set Developer options → USB debugging to O
    Install Broom Home on my <brand and model> TV from https://github.com/jignesh-rav/broom-home
    My TV's IP is 192.168.1.50 and USB debugging is on (Step 1 of the README is done).
    Clone the repo, follow its CLAUDE.md, install adb if it's missing, and run the installer.
-   Ask me before debloating or turning on the ad-blocking DNS.
+   Show me what the debloat step will switch off before running it, and ask before turning on the ad-blocking DNS.
    ```
 3. When Claude says it's connecting, look at the TV and accept **"Allow USB debugging?"**.
 4. Press **Home** on the remote.
 
 Claude follows [`CLAUDE.md`](CLAUDE.md), which spells out the steps, the checks to run afterwards and what it must never touch. You can also ask it for more afterwards, for example "debloat my TV but keep Mi screen mirroring", "undo everything", "switch off the markets feature", or "change the watchlist to US stocks only and rebuild".
 
-**Not a Xiaomi TV?** Installing Broom and making it the default launcher works the same way. Debloating and the Stats page's "before / after" numbers take a few extra steps, which Claude handles once Broom is in:
+**Which TVs does the debloat cover?** The installer picks the lists for your brand by itself (details in [docs/DEBLOAT.md](docs/DEBLOAT.md)):
+- **Xiaomi Mi TV** and **TCL**: ready-made lists, tested on those TVs ([`debloat-list.txt`](scripts/debloat-list.txt), [`debloat-tcl.txt`](scripts/debloat-tcl.txt)).
+- **Any other Android TV / Google TV**: the Google telemetry, feedback and recommendation packages found on every Android TV. Packages that aren't on your TV are skipped.
+
+Want a deeper clean-up of your model's own bloat (Sony, Philips, OnePlus…) and the Stats page's "before / after" numbers for your TV? Claude can do that after the install:
 1. It snapshots your TV before any change.
 2. It lists your model's packages, sorted into junk / caution / keep, and disables only what you approve.
 3. It snapshots again afterwards.
 4. It rebuilds the Stats page with your TV's numbers.
 
-Ask: *"…then help me debloat my &lt;brand and model&gt; TV and update the Stats page for it."* Details: [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md#on-non-xiaomi-tvs-whats-the-same-and-what-needs-extra-steps).
+Ask: *"…then help me debloat my &lt;brand and model&gt; TV further and update the Stats page for it."* Details: [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md#on-non-xiaomi-tvs-whats-the-same-and-what-needs-extra-steps).
 
 ### Path B: run the installer yourself (no build)
 
@@ -130,7 +134,7 @@ Ask: *"…then help me debloat my &lt;brand and model&gt; TV and update the Stat
    - macOS: `brew install android-platform-tools`
    - Linux: `sudo apt install adb`
 3. **Download this repo:** the green **Code** button → **Download ZIP**, then unzip it.
-4. **Run the installer** from the `scripts` folder. It downloads the latest `BroomHome.apk` from [Releases](../../releases/latest) by itself:
+4. **Run the installer** from the `scripts` folder. It downloads the latest `BroomHome.apk` from [Releases](../../releases/latest) by itself and does the whole setup in two steps: **Step 1** installs Broom and makes it the Home app and screensaver, **Step 2** debloats the TV:
 
    Windows: open the `scripts` folder, Shift + right-click on an empty spot → **Open PowerShell window here**, then:
    ```powershell
@@ -141,7 +145,12 @@ Ask: *"…then help me debloat my &lt;brand and model&gt; TV and update the Stat
    ./install.sh 192.168.1.50
    ```
 5. **On the TV**, accept **"Allow USB debugging?"**. Tick *Always allow from this computer*.
-6. Press **Home** on the remote. You're on Broom. If the TV asks which Home app to use, choose **Broom Home → Always**.
+6. **Answer the debloat questions** in the terminal. The installer lists what it found on *your* TV, with a line on what each one is:
+   - **Safe** (telemetry, ad rows, apps a TV can't use): *Switch off the N safe ones? [Y/n]*. Press Enter for yes.
+   - **Optional** (Mi Music, screen mirroring, the screen reader, TCL Home…): switch off **a**ll, **n**one (the default) or **c**hoose one by one.
+
+   Nothing is deleted, and the remote, HDMI, picture, sound, voice, Chromecast, the Play Store and system updates are never touched. `undo` turns everything back on. At the end it offers to restart the TV, which frees the memory.
+7. Press **Home** on the remote. You're on Broom. If the TV asks which Home app to use, choose **Broom Home → Always**.
 
 Then take the tour in **[docs/FEATURES.md](docs/FEATURES.md)**.
 
@@ -149,7 +158,9 @@ Then take the tour in **[docs/FEATURES.md](docs/FEATURES.md)**.
 
 | Windows | macOS / Linux | What it does |
 |---|---|---|
-| `-Debloat` | `--debloat` | **Xiaomi Mi TVs only** (other brands: use Path A and ask Claude). Disables the packages in [`scripts/debloat-list.txt`](scripts/debloat-list.txt): telemetry, ad rows, and services a TV doesn't need. Edit the list first; each one is explained in [docs/DEBLOAT.md](docs/DEBLOAT.md) |
+| `-DebloatPreview` | `--debloat-preview` | Only show what Step 2 would switch off on your TV; change nothing |
+| `-NoDebloat` | `--no-debloat` | Skip Step 2: install Broom only and leave every other app as it is |
+| `-Debloat` | `--debloat` | Step 2 without questions: switch off the safe **and** the optional packages. Delete lines from the lists first to keep something |
 | `-AdBlockDns` | `--adblock-dns` | AdGuard private DNS: blocks ads and trackers for the whole TV |
 | `-Apk path\to.apk` | `APK=path/to.apk ./install.sh …` | Use an APK you already have instead of downloading |
 
@@ -185,7 +196,7 @@ The code is plain Java with no libraries, one file per screen. [docs/CUSTOMISE.m
 No. The bootloader is locked and there are no custom ROMs. The research is in [docs/OS-UPGRADE.md](docs/OS-UPGRADE.md).
 
 ## Safety notes
-- Debloating only *disables* packages (`pm disable-user`). Nothing is deleted, and `undo` re-enables everything. On TVs where a disabled app switches itself back on after a reboot, Claude removes it for your user instead (`pm uninstall --user 0`, undone with `cmd package install-existing`), and only with your yes.
+- Debloating only *disables* packages (`pm disable-user`). Nothing is deleted, and `undo` re-enables everything. A few TCL apps switch themselves back on at every boot if they're only disabled; the TCL list marks those, and the installer removes them for your user instead (`pm uninstall -k --user 0`). They stay on the TV, and `undo` brings them back (`cmd package install-existing`).
 - Never disable `com.droidlogic.*`, Bluetooth, the remote service, `com.android.tv`, Google Assistant, Play services, Play Store, Chromecast or `com.xiaomi.mitv.updateservice`. The list leaves them alone.
 - Don't `am force-stop com.broom.launcher`. Android then drops the remote-button helper until you re-run the installer or reboot.
 - Market data is delayed and for display only. It is not investment advice.

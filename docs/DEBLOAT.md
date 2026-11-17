@@ -1,24 +1,32 @@
 # Debloat: what gets switched off and why
 
-> **This list is for Xiaomi Mi TVs.** Other brands (Sony, TCL, OnePlus, Philips, Google TV…) have their own bloat with different package names. Don't use `-Debloat` there. Instead, ask Claude:
->
-> *"Debloat my &lt;brand and model&gt; TV at &lt;IP&gt;. Follow the Non-Xiaomi TVs section of CLAUDE.md."*
->
-> Claude will:
-> 1. take a before snapshot of the TV
-> 2. list every package on your model, sorted into junk / caution / keep
-> 3. disable only what you approve, in small batches, checking the remote, HDMI and sound after each batch
-> 4. save a per-model list (`scripts/debloat-<brand>-<model>.txt`) so it can be undone
-> 5. optionally rebuild the Stats page with your TV's own before / after numbers
->
-> Do this **after** Broom is installed and working as the home screen.
->
-> On some brands (seen on a TCL) a few disabled system apps switch themselves back on at boot. Claude checks after a reboot and, with your yes, removes those for your user instead (`pm uninstall --user 0`). That's also reversible: `cmd package install-existing <package>`.
+Debloat is **Step 2 of the installer**. After Broom is set up as the Home app, the installer:
+1. reads [`scripts/debloat-list.txt`](../scripts/debloat-list.txt) and, if there is one, the list for your TV's brand (`scripts/debloat-<brand>.txt`, for example [`debloat-tcl.txt`](../scripts/debloat-tcl.txt))
+2. skips every package that isn't on your TV or is already off
+3. shows the rest in two groups and asks:
+   - **Safe** (telemetry, ads, apps a TV can't use): yes by default
+   - **Optional** (your call): no by default; you can also choose one by one
+4. switches off what you said yes to, then offers to restart the TV
 
-`install -Debloat` runs `pm disable-user --user 0 <package>` for every line in [`scripts/debloat-list.txt`](../scripts/debloat-list.txt).
-- A disabled package stays on the TV but never starts. You get back its RAM and background CPU.
-- `undo` runs `pm enable` on the same list.
-- Edit the list before you run the installer. Lines starting with `#` are ignored.
+Preview it first, changing nothing: `.\install.ps1 -Tv <ip> -DebloatPreview` or `./install.sh <ip> --debloat-preview`. Skip it with `-NoDebloat` / `--no-debloat`.
+
+| TV | Lists used |
+|---|---|
+| Xiaomi Mi TV (PatchWall) | `debloat-list.txt`, tested on a 1 GB Mi TV 4A Pro |
+| TCL | `debloat-list.txt` + `debloat-tcl.txt`, tested on a 2018 TCL 4K (BeyondTV) |
+| Any other Android TV / Google TV | `debloat-list.txt`: only its Google packages are found (feedback, bug reports, recommendation rows, screensaver, Play Movies…) |
+
+**Other brands** (Sony, Philips, OnePlus, Google TV…) have their own bloat with different package names. For a model-specific clean-up, ask Claude after the install:
+
+> *"Debloat my &lt;brand and model&gt; TV at &lt;IP&gt; further. Follow the Non-Xiaomi TVs section of CLAUDE.md."*
+
+Claude snapshots the TV, lists every package sorted into junk / caution / keep, disables only what you approve in small batches (checking the remote, HDMI and sound after each), and saves a per-model list (`scripts/debloat-<brand>-<model>.txt`) that `undo` also reads.
+
+### How a package is switched off
+- `pm disable-user --user 0 <package>`: the package stays on the TV but never starts. You get back its RAM and background CPU.
+- Lines marked `remove-for-user` (TCL apps that switch themselves back on at every boot): `pm uninstall -k --user 0 <package>`. The app stays on the TV, just not for your user.
+- `undo` runs `cmd package install-existing` and `pm enable` for every package in every `debloat-*.txt`.
+- Edit the lists before you run the installer: delete a line, or put `#` in front of it, to never have it switched off. Lines under a `# --- optional` heading are asked about separately.
 
 Measured on a 1 GB Mi TV 4A Pro (idle, home screen):
 
