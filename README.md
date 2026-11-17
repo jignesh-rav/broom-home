@@ -36,7 +36,7 @@ A full tour with the remote is in **[docs/FEATURES.md](docs/FEATURES.md)**.
 **Screensavers:** Nebula Drift, Aurora, Warp Speed, Rangoli Mandala, Minimal Clock, Facts & Quotes, Briefing, Panchang, Desi Clock and Sayings (time, date, weather and dohe / abhangs / kahevat in Hindi, Gujarati or Marathi), photo packs (Monuments, Nature, Animals, Baby animals, Space, from Wikimedia featured pictures) and your own photos from a USB stick. Photos change every minute and info every 3 minutes; new photo downloads are capped at 24 every 6 hours
 
 **Extras**
-- Pop-ups over any app or HDMI input: live scores (a wicket, every 50 runs, goals), market alerts, and optional updates every 15–60 min (market pulse, live score, weather heads-ups, top headline, Panchang, break reminder)
+- Pop-ups over any app or HDMI input: live scores (a wicket, every 50 runs, goals), market alerts, and updates every 10 min, each on screen for 90 s (market pulse, live score, weather heads-ups, top headline, Panchang, break reminder)
 - Market alerts when an index moves 1% or a watchlist stock moves 5%
 - **Still watching?** (Settings): after 1–6 hours with no remote key, a card counts down (default 180 seconds) and then puts the TV in standby; any key cancels
 - **Settings → Language:** Panchang language, screensaver language and which Indian-language news to show

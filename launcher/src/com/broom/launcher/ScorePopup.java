@@ -116,11 +116,15 @@ final class ScorePopup {
         card("🏏  " + event, score, event.startsWith("WICKET") ? 0xFFFF6B60 : 0xFFFFD166);
     }
 
-    /** A pop-up card bottom-right for 10 s (used by cricket, football and market alerts). */
+    static final long SHOW_MS = 90000L;
+
+    boolean showing() { return shown != null; }
+
+    /** A pop-up card bottom-right for 90 s (used by cricket, football, market alerts and the pop-up updates). */
     void card(String head, String line, int headColor) {
         hide();
         Theme th = Theme.current(svc);
-        LinearLayout card = new LinearLayout(svc);
+        final LinearLayout card = new LinearLayout(svc);
         card.setOrientation(LinearLayout.VERTICAL);
         Ui.Glass g = Ui.glass(svc, th, Ui.dp(svc, 16));
         card.setBackground(g.d);
@@ -148,7 +152,7 @@ final class ScorePopup {
             card.animate().alpha(1f).setDuration(400).start();
             Sounds.init(svc);
             Sounds.click(svc);
-            h.postDelayed(new Runnable() { @Override public void run() { hide(); } }, 10000);
+            h.postDelayed(new Runnable() { @Override public void run() { if (shown == card) hide(); } }, SHOW_MS);
         } catch (Exception ignored) { shown = null; }
     }
 

@@ -891,7 +891,7 @@ public class MainActivity extends Activity {
         String[] names;
         if (kind.equals(Pulse.PANCHANG)) { mins = new int[]{0, 1}; names = new String[]{"Off", "On (Rahu Kaal soon, good Choghadiya starts)"}; }
         else if (kind.equals(Pulse.WELLNESS)) { mins = new int[]{0, 60, 90, 120}; names = new String[]{"Off", "After 1 hour", "After 1½ hours", "After 2 hours"}; }
-        else { mins = new int[]{0, 15, 30, 60}; names = new String[]{"Off", "Every 15 min", "Every 30 min", "Every hour"}; }
+        else { mins = new int[]{0, 10, 15, 30, 60}; names = new String[]{"Off", "Every 10 min", "Every 15 min", "Every 30 min", "Every hour"}; }
         new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
                 .setTitle(label)
                 .setItems(names, new DialogInterface.OnClickListener() {

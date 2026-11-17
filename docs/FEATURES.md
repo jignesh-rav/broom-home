@@ -110,7 +110,7 @@ It also covers a common TV quirk: the device sends "switch to me" while the TV i
 
 ## Pop-ups (over any app or HDMI input)
 
-A small card appears in the bottom-right corner over whatever is on: YouTube, Netflix, any app, or an HDMI input such as a Fire TV. It shows for about 10 seconds, then fades. It doesn't pause the video or take the remote. Nothing pops up while Broom's own home screen is showing, because it already shows all of this.
+A small card appears in the bottom-right corner over whatever is on: YouTube, Netflix, any app, or an HDMI input such as a Fire TV. It stays for 90 seconds, then fades. It doesn't pause the video or take the remote. Nothing pops up while Broom's own home screen is showing, because it already shows all of this.
 
 **When something happens:**
 - 🏏 **Cricket**: when an India / IPL match goes live, each wicket, and every 50 runs
@@ -118,19 +118,19 @@ A small card appears in the bottom-right corner over whatever is on: YouTube, Ne
 - 📈 **Markets**: an index moving 1%+ or a watchlist stock moving 5%+ (each level once a day, even across restarts)
 - 💤 **Sleep timer** warning
 
-**Pop-up updates on a rhythm** (Settings → **Pop-up updates**). Each type has its own interval or can be switched off:
+**Pop-up updates on a rhythm** (Settings → **Pop-up updates**). Each type has its own interval (10, 15, 30 or 60 min) or can be switched off. Every pop-up stays on screen for 90 seconds, and a new one waits until the current one has gone:
 
 | Update | Default | What it shows |
 |---|---|---|
-| 📈 Market pulse | every 30 min, market hours only | Nifty and Sensex in Indian hours, S&P and Nasdaq in the US session, plus your watchlist's biggest mover |
-| 🏏 Live cricket score | every 15 min, only during India / IPL matches | The current score |
-| 🌦️ Weather heads-ups | checks every 30 min, only when there's news | Rain likely in the next 2 hours, unhealthy air (AQI 150 / 200 / 300), heat (feels like 40°+). Each once a day |
-| 📰 Top headline | every 30 min | The newest story from the news sections you follow, never repeated |
+| 📈 Market pulse | every 10 min, market hours only | Nifty and Sensex in Indian hours, S&P and Nasdaq in the US session, plus your watchlist's biggest mover |
+| 🏏 Live cricket score | every 10 min, only during India / IPL matches | The current score |
+| 🌦️ Weather heads-ups | checks every 10 min, only when there's news | Rain likely in the next 2 hours, unhealthy air (AQI 150 / 200 / 300), heat (feels like 40°+). Each once a day |
+| 📰 Top headline | every 10 min | The newest story from the news sections you follow, never repeated |
 | 🕉️ Panchang moments | off | 10 minutes before Rahu Kaal, and when a good Choghadiya (Amrit, Shubh, Labh) starts |
 | 🧘 Break reminder | off | After 1, 1½ or 2 hours of non-stop watching |
 
 - **Quiet hours** (on by default): no rhythm pop-ups from 11 PM to 7 AM.
-- **Test all now** shows every type once, about 10 seconds apart, so you can see them before you choose.
+- **Test all now** shows every type once, about 10 seconds apart (each replaces the one before; the last stays 90 seconds), so you can see them before you choose.
 - Switching off a section in **Features** (markets, cricket, Panchang, a news category) also stops its pop-ups.
 
 ## Network monitor and TV stats

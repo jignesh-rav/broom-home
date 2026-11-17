@@ -24,7 +24,7 @@ final class Pulse {
     static final String[] LABELS = {"Market pulse", "Live cricket score", "Weather heads-ups", "Top headline",
             "Panchang moments", "Break reminder"};
     /** Default minutes; 0 = off. Panchang is on/off only (checked every minute). */
-    private static final int[] DEFAULTS = {30, 15, 30, 30, 0, 0};
+    private static final int[] DEFAULTS = {10, 10, 10, 10, 0, 0};
 
     static Pulse instance;   // set while the button helper runs (same process as the launcher)
 
@@ -44,6 +44,16 @@ final class Pulse {
     static int minutes(Context c, String kind) {
         int i = idx(kind);
         return prefs(c).getInt("pulse_" + kind, DEFAULTS[i]);
+    }
+
+    /** v18.2: pop-ups every 10 min. Moves saved 15 / 30 / 60-minute choices to 10 once; "Off" stays off. */
+    private static void migrateTo10(Context c) {
+        SharedPreferences p = prefs(c);
+        if (p.getBoolean("pulse_10min", false)) return;
+        SharedPreferences.Editor e = p.edit().putBoolean("pulse_10min", true);
+        for (String k : new String[]{MARKET, CRICKET, WEATHER, NEWS})
+            if (p.getInt("pulse_" + k, 10) > 10) e.putInt("pulse_" + k, 10);
+        e.apply();
     }
 
     static void setMinutes(Context c, String kind, int m) { prefs(c).edit().putInt("pulse_" + kind, m).apply(); }
@@ -71,6 +81,7 @@ final class Pulse {
     void start() {
         if (running) return;
         running = true;
+        migrateTo10(svc);
         long now = System.currentTimeMillis();
         for (int i = 0; i < last.length; i++) last[i] = now;   // first updates come one interval after start
         watchingSince = now;
@@ -89,6 +100,7 @@ final class Pulse {
             if (pm != null && !pm.isInteractive()) { watchingSince = now; return; }
             if (quiet(svc)) return;
             if (svc.getPackageName().equals(foreground)) return;      // Broom home already shows it all
+            if (popup.showing()) return;                               // let the card on screen run its full 90 s
             new Thread(new Runnable() { @Override public void run() { check(false); } }).start();
         }
     };
