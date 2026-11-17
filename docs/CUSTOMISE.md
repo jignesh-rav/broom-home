@@ -46,3 +46,11 @@ adb shell am broadcast -a com.broom.launcher.SCORE_DEMO                    # sco
 adb shell am broadcast -a com.broom.launcher.MARKET_DEMO                   # market alert pop-up
 ```
 Screenshot: `adb exec-out screencap -p > shot.png`.
+
+Settings over ADB (what [Broom Console](CONSOLE.md) uses; only the ADB shell can send these):
+```bash
+adb shell am broadcast -a com.broom.launcher.BACKUP -n com.broom.launcher/.BackupReceiver   # settings to /sdcard/Android/data/com.broom.launcher/files/broom-settings.json
+adb shell am broadcast -a com.broom.launcher.RESTORE -n com.broom.launcher/.BackupReceiver  # merge that file back in
+adb shell am broadcast -a com.broom.launcher.STATUS -n com.broom.launcher/.BackupReceiver   # 18.3+: broom-status.json (version, DNS, network, memory, apps)
+adb shell am broadcast -a com.broom.launcher.RELOAD -n com.broom.launcher/.BackupReceiver   # 18.3+: re-read watchlists, redraw home
+```

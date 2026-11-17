@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Broom Console</title>
+<style>
+:root {
+  --bg: #f6f5f1; --panel: #ffffff; --ink: #1d1d1b; --dim: #6b6a65; --line: #e3e1da;
+  --accent: #0f6e63; --accent-ink: #ffffff; --soft: #e7f2ef; --warn: #9a5b00; --warn-bg: #fdf1dc;
+  --bad: #a3231d; --bad-bg: #fbe7e5; --ok: #1f7a3d; --ok-bg: #e4f4e8; --changed: #fff1b8; --diff: #f8f1dc;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141513; --panel: #1d1f1c; --ink: #ecebe6; --dim: #a19f97; --line: #33352f;
+    --accent: #48b3a4; --accent-ink: #0b1513; --soft: #1f2e2b; --warn: #f0b45a; --warn-bg: #33291a;
+    --bad: #f08a83; --bad-bg: #3a201e; --ok: #77d08f; --ok-bg: #1c3123; --changed: #4a4116; --diff: #2c2b1d;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+header { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 18px 24px 8px; }
+header h1 { margin: 0; font-size: 22px; letter-spacing: -0.01em; }
+header .meta { color: var(--dim); font-size: 13px; }
+header .spacer { flex: 1; }
+nav { display: flex; gap: 4px; padding: 6px 24px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+nav button { border: 0; background: none; color: var(--dim); padding: 10px 14px; font: inherit; cursor: pointer; border-bottom: 2px solid transparent; }
+nav button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+main { padding: 20px 24px 120px; max-width: 1400px; }
+section[hidden] { display: none; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 16px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+.card h2 { margin: 0; font-size: 17px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.card .host { color: var(--dim); font-size: 13px; font-weight: 400; }
+.pill { font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 99px; background: var(--soft); color: var(--accent); white-space: nowrap; }
+.pill.ok { background: var(--ok-bg); color: var(--ok); }
+.pill.warn { background: var(--warn-bg); color: var(--warn); }
+.pill.bad { background: var(--bad-bg); color: var(--bad); }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 12px 0; font-size: 14px; }
+dt { color: var(--dim); }
+dd { margin: 0; }
+.hint { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 10px 12px; margin: 12px 0; font-size: 14px; }
+.actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+button.b { border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: inherit; font-size: 13px;
+  padding: 6px 11px; border-radius: 8px; cursor: pointer; }
+button.b:hover:not(:disabled) { border-color: var(--accent); }
+button.b.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+button.b.danger { color: var(--bad); }
+button.b:disabled { opacity: .5; cursor: default; }
+.result { font-size: 13px; color: var(--dim); margin-top: 8px; min-height: 1em; }
+.result.err { color: var(--bad); }
+.shot { margin-top: 10px; width: 100%; border-radius: 8px; border: 1px solid var(--line); display: block; }
+.muted { color: var(--dim); }
+.small { font-size: 13px; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+input[type=text], select, textarea { font: inherit; font-size: 14px; color: var(--ink); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; }
+textarea { width: 100%; min-height: 260px; font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+table { border-collapse: collapse; width: 100%; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+th, td { text-align: left; padding: 7px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; font-size: 14px; }
+thead th { font-size: 13px; color: var(--dim); font-weight: 600; background: var(--panel); position: sticky; top: 0; }
+tr.group td { background: var(--soft); font-weight: 600; color: var(--accent); }
+tr.diff td { background: var(--diff); }
+td.changed { background: var(--changed) !important; }
+td .note { font-size: 12px; color: var(--dim); }
+.bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--panel); border-top: 1px solid var(--line);
+  padding: 12px 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.bar[hidden] { display: none; }
+.cols { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+ol.favs { list-style: none; padding: 0; margin: 10px 0; }
+ol.favs li { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 5px; font-size: 14px; }
+ol.favs li .n { width: 1.6em; color: var(--dim); font-size: 12px; }
+ol.favs li .name { flex: 1; }
+ol.favs li.missing .name { color: var(--dim); text-decoration: line-through; }
+ol.favs li button { border: 0; background: none; color: var(--dim); cursor: pointer; font-size: 15px; padding: 0 4px; }
+ol.favs li button:hover { color: var(--ink); }
+.chip { display: inline-block; border: 1px dashed var(--accent); color: var(--accent); border-radius: 99px; padding: 2px 10px; font-size: 13px; cursor: pointer; background: none; font: inherit; }
+#toast { position: fixed; right: 20px; top: 20px; max-width: 420px; background: var(--ink); color: var(--bg); padding: 10px 14px;
+  border-radius: 10px; font-size: 14px; opacity: 0; transform: translateY(-8px); transition: .2s; pointer-events: none; z-index: 10; }
+#toast.show { opacity: 1; transform: none; }
+#toast.err { background: var(--bad); color: #fff; }
+@media (max-width: 600px) {
+  header, nav, main { padding-left: 16px; padding-right: 16px; }
+  .grid, .cols { grid-template-columns: 1fr; }
+  th, td { padding: 6px 8px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Broom Console</h1>
+  <span class="meta" id="latest">Checking the latest release…</span>
+  <span class="spacer"></span>
+  <button class="b primary" id="updateAll" hidden>Update all TVs</button>
+  <button class="b" id="refreshAll">Refresh</button>
+</header>
+<nav role="tablist">
+  <button role="tab" data-tab="overview" aria-selected="true">Overview</button>
+  <button role="tab" data-tab="settings">Settings</button>
+  <button role="tab" data-tab="favs">Favourites</button>
+  <button role="tab" data-tab="watch">Watchlist</button>
+  <button role="tab" data-tab="backups">Backups</button>
+</nav>
+<main>
+  <section id="overview">
+    <div id="adbHint" class="hint" hidden></div>
+    <div class="grid" id="cards"></div>
+    <div class="card" style="margin-top:16px">
+      <h2>Add a TV</h2>
+      <p class="muted small">Its IP address from the TV's network settings. ADB over Wi-Fi must be on (see the README, Step 1).</p>
+      <div class="row">
+        <input type="text" id="addName" placeholder="Name, e.g. Living room" maxlength="40">
+        <input type="text" id="addHost" placeholder="IP, e.g. 192.168.1.50">
+        <button class="b primary" id="addBtn">Add</button>
+      </div>
+      <div class="row small" id="suggest" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <section id="settings" hidden>
+    <p class="muted small">Each TV's own value is shown. Rows where the TVs differ are shaded. Change a value, or use
+      <b>Copy</b> to give the other TVs the value from <select id="copyFrom"></select>, then save. Weather location,
+      HDMI names and the sleep timer always stay on each TV.</p>
+    <div class="row" style="margin-bottom:12px"><button class="b" id="copyAll">Copy every difference from that TV</button>
+      <button class="b" id="reloadSettings">Reload from the TVs</button></div>
+    <div id="settingsBox" class="muted">Loading…</div>
+  </section>
+
+  <section id="favs" hidden>
+    <p class="muted small">The Favourites row on each TV's home screen, in order. Apps that aren't installed on a TV are
+      struck through; Broom skips them there.</p>
+    <div class="cols" id="favCols"></div>
+  </section>
+
+  <section id="watch" hidden>
+    <p class="muted small">One stock per line: <code>SYMBOL, Name</code>. Indian stocks end in <code>.NS</code>
+      (NSE) or <code>.BO</code> (BSE), for example <code>TCS.NS, TCS</code>. US stocks are just the ticker, like <code>NVDA, Nvidia</code>.</p>
+    <div class="cols" id="watchCols"></div>
+  </section>
+
+  <section id="backups" hidden>
+    <p class="muted small">Backups are saved on this computer in <code>console/data/backups/</code>. A backup can only
+      be restored to the TV it came from; to copy settings between TVs, use the Settings tab.</p>
+    <div class="cols" id="backupCols"></div>
+  </section>
+</main>
+<div class="bar" id="saveBar" hidden>
+  <b id="saveCount"></b><span class="muted small" id="saveNote"></span><span class="spacer" style="flex:1"></span>
+  <button class="b" id="discard">Discard</button><button class="b primary" id="saveBtn">Save to the TVs</button>
+</div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+const KEY = new URLSearchParams(location.search).get("k") || "";
+const S = { tvs: [], schema: [], status: {}, latest: null, local: false, settings: {}, pending: {}, favs: {}, wl: {} };
+const $ = (id) => document.getElementById(id);
+
+function el(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === "class") e.className = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else if (v === true) e.setAttribute(k, "");
+    else if (v !== false && v != null) e.setAttribute(k, v);
+  }
+  for (const k of kids.flat()) if (k != null) e.append(k.nodeType ? k : String(k));
+  return e;
+}
+
+async function api(path, body) {
+  const opt = { headers: { "X-Broom-Key": KEY } };
+  if (body) { opt.method = "POST"; opt.headers["Content-Type"] = "application/json"; opt.body = JSON.stringify(body); }
+  const r = await fetch(path, opt);
+  const j = await r.json().catch(() => ({ error: "Unexpected reply from the console" }));
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+}
+
+let toastTimer;
+function toast(msg, err) {
+  const t = $("toast");
+  t.textContent = msg; t.className = "show" + (err ? " err" : "");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.className = ""), err ? 7000 : 4000);
+}
+
+const vt = (v) => (String(v || "").match(/\d+/g) || []).slice(0, 3).map(Number);
+function newer(a, b) { const x = vt(a), y = vt(b); for (let i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); } return false; }
+const ago = (ms) => { const m = Math.round((Date.now() - ms) / 60000); return m < 1 ? "just now" : m < 60 ? m + " min ago" : Math.round(m / 60) + " h ago"; };
+function dur(s) { const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60); return d ? d + " d " + h + " h" : h ? h + " h " + m + " min" : m + " min"; }
+
+// ------------------------------------------------------------------ tabs
+document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
+function showTab(name) {
+  document.querySelectorAll("nav button").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === name));
+  document.querySelectorAll("main > section").forEach((s) => (s.hidden = s.id !== name));
+  if (name === "settings" && !Object.keys(S.settings).length) loadSettings();
+  if (name === "favs") renderFavs();
+  if (name === "watch") renderWatch();
+  if (name === "backups") renderBackups();
+  updateBar();
+}
+
+// ------------------------------------------------------------------ overview
+async function boot() {
+  try {
+    const j = await api("/api/tvs");
+    S.tvs = j.tvs; S.schema = j.schema; S.local = j.local_apk;
+    $("adbHint").hidden = j.adb; $("adbHint").textContent = j.adb_hint || "";
+    $("suggest").replaceChildren(...(j.suggest.length ? [el("span", { class: "muted" }, "Connected over ADB:"),
+      ...j.suggest.map((s) => el("button", { class: "chip", onclick: () => { $("addHost").value = s.replace(/:5555$/, ""); $("addName").focus(); } }, s))] : []));
+  } catch (e) { toast(e.message, true); return; }
+  renderCards();
+  loadLatest();
+  S.tvs.forEach((t) => loadStatus(t.id));
+  const sel = $("copyFrom"); sel.replaceChildren(...S.tvs.map((t) => el("option", { value: t.id }, t.name)));
+}
+
+async function loadLatest() {
+  try {
+    S.latest = await api("/api/latest");
+    $("latest").textContent = S.latest.error ? S.latest.error : "Latest release: " + S.latest.tag;
+  } catch (e) { $("latest").textContent = e.message; }
+  renderCards();
+}
+
+async function loadStatus(id) {
+  S.status[id] = { loading: true, keep: S.status[id] };
+  renderCard(id);
+  try { S.status[id] = await api("/api/status?tv=" + encodeURIComponent(id)); }
+  catch (e) { S.status[id] = { ok: false, hint: e.message }; }
+  renderCard(id);
+  updateAllBtn();
+  if (!$("favs").hidden) renderFavs();
+  if (!$("watch").hidden) renderWatch();
+}
+
+function renderCards() {
+  $("cards").replaceChildren(...S.tvs.map((t) => el("div", { class: "card", id: "card-" + t.id })));
+  if (!S.tvs.length) $("cards").append(el("p", { class: "muted" }, "No TVs yet. Add one below."));
+  S.tvs.forEach((t) => renderCard(t.id));
+  updateAllBtn();
+}
+
+function behind(s) { return S.latest && S.latest.version && s && s.ok && s.version && newer(S.latest.version, s.version); }
+function updateAllBtn() {
+  const n = S.tvs.filter((t) => behind(S.status[t.id])).length;
+  $("updateAll").hidden = !n; $("updateAll").textContent = "Update " + (n === 1 ? "1 TV" : n + " TVs") + " to " + (S.latest && S.latest.tag);
+}
+
+function renderCard(id) {
+  const t = S.tvs.find((x) => x.id === id), box = $("card-" + id);
+  if (!t || !box) return;
+  const s = S.status[id] || { loading: true };
+  const head = el("h2", {}, t.name, el("span", { class: "host" }, t.host));
+  let pill;
+  if (s.loading) pill = el("span", { class: "pill" }, "Checking…");
+  else if (!s.ok) pill = el("span", { class: "pill bad" }, { off: "ADB off", unauthorized: "Needs approval", offline: "Not answering", unreachable: "Unreachable" }[s.problem] || "Error");
+  else if (s.power === "Awake") pill = el("span", { class: "pill ok" }, "On");
+  else if (s.power === "Dreaming") pill = el("span", { class: "pill ok" }, "Screensaver");
+  else pill = el("span", { class: "pill warn" }, "Standby");
+  head.append(pill);
+  const kids = [head];
+  const res = el("div", { class: "result", id: "res-" + id });
+  const prev = $("res-" + id), prevImg = box.querySelector("img.shot");
+  if (s.loading && !s.keep) { box.replaceChildren(...kids); return; }
+  if (!s.loading && !s.ok) {
+    kids.push(el("div", { class: "hint" }, s.hint || "Couldn't reach this TV."));
+    kids.push(el("div", { class: "actions" }, btn("Try again", () => loadStatus(id)),
+      btn("Remove from list", () => removeTv(t), "danger")));
+    box.replaceChildren(...kids); return;
+  }
+  const d = s.loading ? s.keep || {} : s, b = d.broom || {};
+  const dl = el("dl");
+  const add = (k, v) => { if (v != null && v !== "") dl.append(el("dt", {}, k), el("dd", {}, v)); };
+  const ver = el("span", {}, d.version ? "Broom " + d.version : "Broom not installed");
+  if (behind(d)) ver.append(" ", el("span", { class: "pill warn" }, S.latest.tag + " available"));
+  else if (d.version && S.latest && S.latest.version) ver.append(" ", el("span", { class: "pill ok" }, newer(d.version, S.latest.version) ? "newer than " + S.latest.tag : "up to date"));
+  add("Version", ver);
+  add("Model", d.model);
+  if (d.uptime_s != null) add("Uptime", dur(d.uptime_s));
+  if (b.mem) add("Memory", b.mem.avail_mb + " MB free of " + b.mem.total_mb + " MB" + (b.mem.low ? " (low!)" : ""));
+  if (d.storage_free_mb != null) add("Storage", (d.storage_free_mb / 1024).toFixed(1) + " GB free");
+  let dns = "Router's DNS";
+  if (d.dns_mode === "hostname") dns = d.dns_host === "dns.adguard-dns.com" ? "AdGuard" : d.dns_host === "one.one.one.one" ? (b.dns && b.dns.on_backup ? "Cloudflare (backup: AdGuard is down)" : "Cloudflare") : d.dns_host;
+  add("DNS", dns);
+  if (b.net && b.net.checks) {
+    const n = b.net, up = (n.up * 100 / n.checks).toFixed(n.up === n.checks ? 0 : 1);
+    add("Network, 24 h", up + "% up · " + n.avg_ms + " ms avg" + (n.speed_mbps ? " · last speed test " + n.speed_mbps.toFixed(1) + " Mbps" : ""));
+  }
+  add("Button helper", d.helper_enabled ? (d.helper_running ? "On" : "Enabled, not running yet") : "Off (pop-ups and the sleep timer won't work)");
+  if (b.still_watching) add("Still watching?", b.still_watching.on ? "After " + b.still_watching.hours + " h idle" : "Off");
+  if (b.crash_n) add("Crashes", b.crash_n + " recently (" + ago(b.crash_at) + ")");
+  if (d.version && !d.has_status) add("More detail", "Update Broom to 18.3 or newer");
+  kids.push(dl);
+  const rel = S.latest && S.latest.version;
+  const acts = el("div", { class: "actions" });
+  if (rel && !(d.version && newer(d.version, rel))) acts.append(btn(behind(d) ? "Update to " + S.latest.tag : "Reinstall " + S.latest.tag, () => act(t, { action: "install", source: "latest" }), behind(d) ? "primary" : ""));
+  if (S.local) acts.append(btn("Install local build", () => act(t, { action: "install", source: "local" })));
+  acts.append(btn("Screenshot", () => act(t, { action: "screenshot" })));
+  if (d.helper_running) acts.append(btn("Test pop-ups", () => act(t, { action: "popups" })));
+  if (d.has_status) acts.append(btn("Redraw home", () => act(t, { action: "reload" })));
+  acts.append(d.dns_mode === "hostname" ? btn("DNS: use router's", () => confirmAct(t, "Switch " + t.name + " back to the router's DNS? Ads are no longer blocked.", { action: "dns_off" }))
+    : btn("DNS: AdGuard", () => act(t, { action: "dns_adguard" })));
+  acts.append(btn("Back up settings", () => act(t, { action: "backup" })));
+  acts.append(btn("Restart…", () => confirmAct(t, "Restart " + t.name + "? Whoever is watching is interrupted, and on a Xiaomi ADB can come back switched off.", { action: "restart" }), "danger"));
+  kids.push(acts, res);
+  if (prev && prev.textContent) { res.textContent = prev.textContent; res.className = prev.className; }
+  if (prevImg) kids.push(prevImg);
+  box.replaceChildren(...kids);
+}
+
+function btn(label, fn, cls) { return el("button", { class: "b " + (cls || ""), onclick: (e) => fn(e) }, label); }
+
+function confirmAct(t, question, body) { if (confirm(question)) act(t, body); }
+
+async function act(t, body) {
+  const box = $("card-" + t.id), res = $("res-" + t.id);
+  box.querySelectorAll("button").forEach((b) => (b.disabled = true));
+  res.className = "result"; res.textContent = { install: "Installing… this takes up to a minute.", screenshot: "Taking a screenshot…", restart: "Restarting…" }[body.action] || "Working…";
+  try {
+    const j = await api("/api/action", Object.assign({ tv: t.id }, body));
+    res.textContent = j.msg;
+    if (j.img) {
+      box.querySelectorAll("img.shot").forEach((i) => i.remove());
+      box.append(el("img", { class: "shot", alt: "Screenshot of " + t.name, src: j.img + "?k=" + encodeURIComponent(KEY) }));
+    }
+    if (body.action === "backup" && !$("backups").hidden) renderBackups();
+    if (body.action !== "screenshot" && body.action !== "popups") setTimeout(() => loadStatus(t.id), body.action === "restart" ? 60000 : 500);
+  } catch (e) { res.className = "result err"; res.textContent = e.message; }
+  box.querySelectorAll("button").forEach((b) => (b.disabled = false));
+}
+
+$("updateAll").addEventListener("click", () => S.tvs.filter((t) => behind(S.status[t.id])).forEach((t) => act(t, { action: "install", source: "latest" })));
+$("refreshAll").addEventListener("click", () => { loadLatest(); S.tvs.forEach((t) => loadStatus(t.id)); if (!$("settings").hidden) loadSettings(); });
+
+$("addBtn").addEventListener("click", async () => {
+  try {
+    await api("/api/tvs/add", { name: $("addName").value, host: $("addHost").value });
+    $("addName").value = $("addHost").value = ""; S.settings = {}; await boot();
+  } catch (e) { toast(e.message, true); }
+});
+async function removeTv(t) {
+  if (!confirm("Remove " + t.name + " from the Console? Nothing changes on the TV.")) return;
+  try { await api("/api/tvs/remove", { tv: t.id }); delete S.status[t.id]; await boot(); } catch (e) { toast(e.message, true); }
+}
+
+// ------------------------------------------------------------------ settings
+async function loadSettings() {
+  $("settingsBox").replaceChildren(el("span", { class: "muted" }, "Reading settings from the TVs…"));
+  S.pending = {}; S.settings = {};
+  await Promise.all(S.tvs.map(async (t) => {
+    try { S.settings[t.id] = await api("/api/settings?tv=" + encodeURIComponent(t.id)); }
+    catch (e) { S.settings[t.id] = { ok: false, hint: e.message }; }
+  }));
+  renderSettings(); updateBar();
+}
+$("reloadSettings").addEventListener("click", loadSettings);
+
+const live = () => S.tvs.filter((t) => S.settings[t.id] && S.settings[t.id].ok);
+function val(id, key) { const p = S.pending[id]; return p && key in p ? p[key] : S.settings[id].values[key]; }
+function setVal(id, key, v) {
+  S.pending[id] = S.pending[id] || {};
+  if (v === S.settings[id].values[key]) delete S.pending[id][key]; else S.pending[id][key] = v;
+  if (!Object.keys(S.pending[id]).length) delete S.pending[id];
+}
+
+function renderSettings() {
+  const tvs = live();
+  const head = el("tr", {}, el("th", {}, "Setting"), ...S.tvs.map((t) => el("th", {}, t.name)), el("th", {}, ""));
+  const body = el("tbody");
+  for (const [group, rows] of S.schema) {
+    body.append(el("tr", { class: "group" }, el("td", { colspan: S.tvs.length + 2 }, group)));
+    for (const [key, type, def, label, opts] of rows) {
+      const tr = el("tr", { id: "row-" + key });
+      tr.append(el("td", {}, label));
+      for (const t of S.tvs) {
+        const st = S.settings[t.id];
+        if (!st || !st.ok) { tr.append(el("td", { class: "muted small" }, "—")); continue; }
+        const v = val(t.id, key);
+        let ctl;
+        if (type === "b") {
+          ctl = el("input", { type: "checkbox", "aria-label": label + " on " + t.name });
+          ctl.checked = !!v;
+          ctl.addEventListener("change", () => { setVal(t.id, key, ctl.checked); renderSettings(); updateBar(); });
+        } else {
+          ctl = el("select", { "aria-label": label + " on " + t.name }, ...(opts || []).map(([ov, ol]) => el("option", { value: String(ov) }, ol)));
+          if (!(opts || []).some(([ov]) => ov === v)) ctl.append(el("option", { value: String(v) }, String(v)));
+          ctl.value = String(v);
+          ctl.addEventListener("change", () => { setVal(t.id, key, type === "i" ? Number(ctl.value) : ctl.value); renderSettings(); updateBar(); });
+        }
+        const td = el("td", {}, ctl);
+        if (S.pending[t.id] && key in S.pending[t.id]) td.className = "changed";
+        tr.append(td);
+      }
+      const vals = tvs.map((t) => JSON.stringify(val(t.id, key)));
+      if (new Set(vals).size > 1) tr.className = "diff";
+      tr.append(el("td", {}, tvs.length > 1 && new Set(vals).size > 1 ? btn("Copy", () => copyKey(key)) : ""));
+      body.append(tr);
+    }
+  }
+  const off = S.tvs.filter((t) => !(S.settings[t.id] && S.settings[t.id].ok));
+  $("settingsBox").replaceChildren(
+    ...off.map((t) => el("div", { class: "hint" }, t.name + ": " + ((S.settings[t.id] || {}).hint || "not loaded"))),
+    el("table", {}, el("thead", {}, head), body));
+}
+
+function copyKey(key) {
+  const from = $("copyFrom").value;
+  if (!S.settings[from] || !S.settings[from].ok) return toast("That TV's settings aren't loaded", true);
+  const v = val(from, key);
+  live().forEach((t) => { if (t.id !== from) setVal(t.id, key, v); });
+  renderSettings(); updateBar();
+}
+$("copyAll").addEventListener("click", () => {
+  for (const [, rows] of S.schema) for (const [key] of rows) copyKey(key);
+});
+
+// ------------------------------------------------------------------ favourites
+function appsOf(id) { const b = (S.status[id] || {}).broom; return b ? b.apps : null; }
+function labelOf(pkg) {
+  for (const t of S.tvs) { const a = appsOf(t.id); const hit = a && a.find((x) => x[0] === pkg); if (hit) return hit[1]; }
+  return pkg;
+}
+function renderFavs() {
+  const cols = S.tvs.map((t) => {
+    const b = (S.status[t.id] || {}).broom;
+    const card = el("div", { class: "card" }, el("h2", {}, t.name));
+    if (!b) { card.append(el("p", { class: "muted small" }, S.status[t.id] && S.status[t.id].loading ? "Loading…" : "Needs the TV reachable and Broom 18.3 or newer.")); return card; }
+    if (!S.favs[t.id]) S.favs[t.id] = { list: b.favs.slice(), orig: b.favs.join(",") };
+    const f = S.favs[t.id], have = new Set(b.apps.map((a) => a[0]));
+    const ol = el("ol", { class: "favs" });
+    f.list.forEach((pkg, i) => {
+      const mv = (d) => { const j = i + d; if (j < 0 || j >= f.list.length) return; [f.list[i], f.list[j]] = [f.list[j], f.list[i]]; renderFavs(); updateBar(); };
+      ol.append(el("li", { class: have.has(pkg) ? "" : "missing", title: pkg }, el("span", { class: "n" }, i + 1), el("span", { class: "name" }, labelOf(pkg) + (have.has(pkg) ? "" : " (not installed)")),
+        el("button", { title: "Move up", "aria-label": "Move up", onclick: () => mv(-1) }, "↑"),
+        el("button", { title: "Move down", "aria-label": "Move down", onclick: () => mv(1) }, "↓"),
+        el("button", { title: "Remove", "aria-label": "Remove", onclick: () => { f.list.splice(i, 1); renderFavs(); updateBar(); } }, "✕")));
+    });
+    const add = el("select", { "aria-label": "Add an app" }, el("option", { value: "" }, "Add an app…"),
+      ...b.apps.filter((a) => !f.list.includes(a[0])).map((a) => el("option", { value: a[0] }, a[1])));
+    add.addEventListener("change", () => { if (add.value) { f.list.push(add.value); renderFavs(); updateBar(); } });
+    card.append(b.favs_default ? el("p", { class: "muted small" }, "Using Broom's default favourites.") : "", ol,
+      el("div", { class: "row" }, add, S.tvs.length > 1 ? btn("Copy this order to the other TVs", () => {
+        S.tvs.forEach((o) => { if (o.id !== t.id && S.favs[o.id]) S.favs[o.id].list = f.list.slice(); }); renderFavs(); updateBar();
+      }) : ""));
+    return card;
+  });
+  $("favCols").replaceChildren(...cols);
+}
+
+// ------------------------------------------------------------------ watchlist
+const toText = (rows) => rows.map((r) => r[0] + ", " + r[1]).join("\n");
+function parseList(text) {
+  const out = [];
+  for (const line of text.split("\n")) {
+    const s = line.trim(); if (!s) continue;
+    const i = s.indexOf(",");
+    const sym = (i < 0 ? s : s.slice(0, i)).trim(), name = (i < 0 ? sym : s.slice(i + 1)).trim();
+    out.push([sym, name || sym]);
+  }
+  return out;
+}
+function renderWatch() {
+  const cols = S.tvs.map((t) => {
+    const b = (S.status[t.id] || {}).broom;
+    const card = el("div", { class: "card" }, el("h2", {}, t.name));
+    if (!b) { card.append(el("p", { class: "muted small" }, "Needs the TV reachable and Broom 18.3 or newer.")); return card; }
+    if (!S.wl[t.id]) S.wl[t.id] = { india: toText(b.watchlists.india), us: toText(b.watchlists.us), orig: { india: toText(b.watchlists.india), us: toText(b.watchlists.us) } };
+    const w = S.wl[t.id];
+    for (const [k, title] of [["india", "India stocks"], ["us", "US tech & AI stocks"]]) {
+      const ta = el("textarea", { "aria-label": title + " on " + t.name, spellcheck: "false" });
+      ta.value = w[k];
+      ta.addEventListener("input", () => { w[k] = ta.value; updateBar(); });
+      card.append(el("p", { class: "small", style: "margin:12px 0 4px" }, el("b", {}, title), " ", el("span", { class: "muted" }, parseList(w[k]).length + " stocks")), ta);
+    }
+    if (S.tvs.length > 1) card.append(el("div", { class: "actions" }, btn("Copy both lists to the other TVs", () => {
+      S.tvs.forEach((o) => { if (o.id !== t.id && S.wl[o.id]) { S.wl[o.id].india = w.india; S.wl[o.id].us = w.us; } }); renderWatch(); updateBar();
+    })));
+    return card;
+  });
+  $("watchCols").replaceChildren(...cols);
+}
+
+// ------------------------------------------------------------------ save bar (settings, favourites, watchlist)
+function changes() {
+  const out = {};
+  const put = (id, k, v) => { (out[id] = out[id] || {})[k] = v; };
+  for (const [id, p] of Object.entries(S.pending)) for (const [k, v] of Object.entries(p)) put(id, k, v);
+  for (const [id, f] of Object.entries(S.favs)) if (f.list.join(",") !== f.orig) put(id, "favs", f.list);
+  for (const [id, w] of Object.entries(S.wl)) for (const k of ["india", "us"])
+    if (w[k].trim() !== w.orig[k].trim()) put(id, "wl_" + k, parseList(w[k]));
+  return out;
+}
+function updateBar() {
+  const c = changes(), n = Object.values(c).reduce((a, x) => a + Object.keys(x).length, 0);
+  $("saveBar").hidden = !n;
+  $("saveCount").textContent = n + (n === 1 ? " change" : " changes");
+  $("saveNote").textContent = "on " + Object.keys(c).map((id) => (S.tvs.find((t) => t.id === id) || {}).name).join(", ");
+}
+$("discard").addEventListener("click", () => {
+  S.pending = {}; S.favs = {}; S.wl = {};
+  if (!$("settings").hidden) renderSettings(); renderFavs(); renderWatch(); updateBar();
+});
+$("saveBtn").addEventListener("click", async () => {
+  const c = changes();
+  $("saveBtn").disabled = true;
+  const msgs = [];
+  let bad = false;
+  for (const [id, values] of Object.entries(c)) {
+    const name = (S.tvs.find((t) => t.id === id) || {}).name;
+    try {
+      const j = await api("/api/settings", { tvs: [id], values });
+      const r = j.results[id];
+      msgs.push(name + ": " + r.msg); if (!r.ok) bad = true;
+    } catch (e) { msgs.push(name + ": " + e.message); bad = true; }
+  }
+  $("saveBtn").disabled = false;
+  toast(msgs.join(" · "), bad);
+  S.pending = {}; S.favs = {}; S.wl = {};
+  await Promise.all(S.tvs.map((t) => loadStatus(t.id)));
+  if (Object.keys(S.settings).length) await loadSettings();
+  renderFavs(); renderWatch(); updateBar();
+});
+
+// ------------------------------------------------------------------ backups
+async function renderBackups() {
+  const cols = await Promise.all(S.tvs.map(async (t) => {
+    const card = el("div", { class: "card" }, el("h2", {}, t.name));
+    card.append(el("div", { class: "actions" }, btn("Back up now", async (e) => {
+      e.target.disabled = true;
+      try { const j = await api("/api/action", { tv: t.id, action: "backup" }); toast(j.msg); } catch (x) { toast(x.message, true); }
+      renderBackups();
+    })));
+    try {
+      const j = await api("/api/backups?tv=" + encodeURIComponent(t.id));
+      if (!j.backups.length) card.append(el("p", { class: "muted small" }, "No backups yet."));
+      const ul = el("ol", { class: "favs" });
+      j.backups.forEach((b) => {
+        const m = b.file.match(/^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);
+        const when = m ? m[3] + "/" + m[2] + "/" + m[1] + " " + m[4] + ":" + m[5] : b.file;
+        ul.append(el("li", {}, el("span", { class: "name" }, when + (b.settings != null ? " · " + b.settings + " settings" : "")),
+          btn("Restore", async () => {
+            if (!confirm("Restore " + t.name + " to its settings from " + when + "? Settings saved since then are replaced.")) return;
+            try { const r = await api("/api/action", { tv: t.id, action: "restore", file: b.file }); toast(r.msg); S.settings = {}; }
+            catch (x) { toast(x.message, true); }
+          })));
+      });
+      card.append(ul);
+    } catch (e) { card.append(el("p", { class: "result err" }, e.message)); }
+    return card;
+  }));
+  $("backupCols").replaceChildren(...cols);
+}
+
+window.addEventListener("beforeunload", (e) => { if (!$("saveBar").hidden) { e.preventDefault(); e.returnValue = ""; } });
+boot();
+</script>
+</body>
+</html>

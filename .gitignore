@@ -12,3 +12,9 @@ crash.txt
 Thumbs.db
 # per-TV ADB snapshots (personal device data)
 snapshots/
+
+# Broom Console: your TV list, backups, screenshots, downloaded APKs
+console/tvs.json
+console/data/
+__pycache__/
+*.pyc

@@ -43,6 +43,7 @@ A full tour with the remote is in **[docs/FEATURES.md](docs/FEATURES.md)**.
 - Sleep timer, tick / click sounds, night mode for the screensaver
 - **Settings → Features** (or **Briefing → Customise**): switch off whole features you don't care about, such as markets, cricket, football, Panchang or any news section. Switched-off features are not downloaded and disappear from home, Briefing, the screensaver and pop-ups.
 - If home ever fails to load, a plain "safe mode" app list appears instead of a black screen
+- **Broom Console** (on your computer): one page for all your TVs. See status, update Broom, compare and copy settings, favourites and watchlists between TVs, take screenshots and back up settings. Details in [docs/CONSOLE.md](docs/CONSOLE.md).
 
 All data comes from free public feeds that need no API keys: Open-Meteo, Yahoo Finance (delayed, display only), ESPNcricinfo, ESPN, BBC (incl. BBC Hindi / Gujarati / Marathi), Dainik Bhaskar, Amar Ujala, Divya Bhaskar, ABP Asmita, ABP Majha, TV9 Marathi, NASA, Ars Technica, TechCrunch, MIT Technology Review, Google News and Wikimedia.
 
@@ -189,6 +190,10 @@ cd launcher
 cd ../scripts && ./install.sh 192.168.1.50   # the installer picks up your fresh build automatically
 ```
 The first build creates your own signing key, `launcher/broom.keystore`. Keep it: Android only accepts updates signed with the same key. Moving between the release APK and your own build means uninstalling first, because they're signed with different keys. Details: [docs/SETUP.md](docs/SETUP.md#building).
+
+## Several TVs? Broom Console
+
+Run `python console/broom-console.py` on the computer you installed from (Windows: double-click `consoleroom-console.cmd`). A page opens with every TV side by side: what's on, which Broom version, memory, DNS and network health, with buttons to update, take a screenshot or restart. Its Settings, Favourites and Watchlist tabs compare the TVs and copy one TV's choices to the others. It works over the same Wi-Fi ADB as the installer, is served only to your computer, and adds nothing to the TVs. See [docs/CONSOLE.md](docs/CONSOLE.md).
 
 ## Make it yours
 

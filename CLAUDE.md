@@ -125,6 +125,9 @@ Use the normal install steps above (Step 2 with the person's answer from the pre
 - Add `-KeepBroom` / `--keep-broom` to only re-enable the debloated packages.
 - A reboot finishes the undo. Ask before rebooting.
 
+## Managing several TVs
+After installing on more than one TV, mention **Broom Console** (`python console/broom-console.py`, see `docs/CONSOLE.md`). It checks and updates all TVs and copies settings between them from one page. Don't start it for them unless they ask; it keeps running in a terminal.
+
 ## Customising and building
 To change code (watchlist defaults, feeds, themes…), see `docs/CUSTOMISE.md`.
 1. Build with `bash launcher/build.sh`. It needs JDK 17+ (`JAVA_HOME`), the Android SDK and Python 3.

@@ -49,6 +49,17 @@ public class MainActivity extends Activity {
     private View firstFocus;
     private String lastFocusedPkg;
     private boolean dirty = true;
+    private static MainActivity live;              // set while home is on screen
+    private static volatile boolean consoleDirty;  // Broom Console changed settings: redraw on next resume
+
+    /** From BackupReceiver RELOAD (ADB only): redraw home now if it is on screen, else when it next shows. */
+    static void requestReload() {
+        consoleDirty = true;
+        final MainActivity m = live;
+        if (m != null) m.runOnUiThread(new Runnable() {
+            @Override public void run() { if (live == m && consoleDirty) { consoleDirty = false; m.rebuild(); } }
+        });
+    }
 
     private final BroadcastReceiver tick = new BroadcastReceiver() {
         @Override public void onReceive(Context c, Intent i) {
@@ -98,6 +109,8 @@ public class MainActivity extends Activity {
         f.addAction(Intent.ACTION_TIMEZONE_CHANGED);
         registerReceiver(tick, f);
         watchInputs(true);
+        live = this;
+        if (consoleDirty) { consoleDirty = false; dirty = true; }
         if (dirty || theme == null || !Theme.current(this).id.equals(theme.id)) rebuild();
         else { updateClock(); updateStatus(); showWeather(Weather.cached(this)); Weather.refresh(this, false, wxListener); }
         refreshTicker();
@@ -105,6 +118,7 @@ public class MainActivity extends Activity {
 
     @Override protected void onPause() {
         super.onPause();
+        if (live == this) live = null;
         try { unregisterReceiver(tick); } catch (Exception ignored) { }
         watchInputs(false);
     }

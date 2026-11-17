@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.broom.launcher"
-    android:versionCode="21"
-    android:versionName="18.2">
+    android:versionCode="22"
+    android:versionName="18.3">
 
     <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="28" />
 
@@ -76,6 +76,8 @@
             <intent-filter>
                 <action android:name="com.broom.launcher.BACKUP" />
                 <action android:name="com.broom.launcher.RESTORE" />
+                <action android:name="com.broom.launcher.STATUS" />
+                <action android:name="com.broom.launcher.RELOAD" />
             </intent-filter>
         </receiver>
 
