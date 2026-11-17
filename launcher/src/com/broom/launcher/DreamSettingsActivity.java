@@ -68,7 +68,7 @@ public class DreamSettingsActivity extends Activity {
                 }
             });
             row.addView(prev, margin());
-            TextView d = Ui.text(this, DreamView.MODE_DESC[i] + (DesiDream.owns(m) ? "  Now: " + Lang.label(Lang.screensaver(this)) : ""), 12, th.dim, th.bodyFont);
+            TextView d = Ui.text(this, DreamView.MODE_DESC[i] + (DesiDream.owns(m) ? "  Languages: " + Lang.dreamSummary(this) + " (Settings → Language)." : ""), 12, th.dim, th.bodyFont);
             d.setPadding(Ui.dp(this, 16), 0, 0, 0);
             row.addView(d, new LinearLayout.LayoutParams(0, -2, 1));
             col.addView(row);
@@ -117,10 +117,15 @@ public class DreamSettingsActivity extends Activity {
         col.addView(r2);
 
         section("Briefing inside every screensaver");
+        TextView bNote = Ui.text(this, "Every 2 minutes the screensaver switches between its own style (for example Sayings & abhangs) "
+                + "and one Briefing page, a different page each time: Markets → India stocks → US tech & AI stocks (only while a market is open) "
+                + "→ Cricket → Football · AI → Space · Market news → Panchang. Pages for features you've switched off are skipped.", 12, th.dim, th.bodyFont);
+        bNote.setPadding(0, 0, 0, Ui.dp(this, 6));
+        col.addView(bNote);
         LinearLayout r3 = chips();
         final boolean bOn = DreamView.briefEverywhere(this);
         for (final boolean opt : new boolean[]{true, false}) {
-            TextView b = Ui.pill(this, (opt == bOn ? "● " : "") + (opt ? "On — every 3 min, show markets, scores & news" : "Off"), th,
+            TextView b = Ui.pill(this, (opt == bOn ? "● " : "") + (opt ? "On" : "Off"), th,
                     new View.OnClickListener() {
                         @Override public void onClick(View v) {
                             Theme.prefs(DreamSettingsActivity.this).edit().putBoolean("brief_in_screensaver", opt).apply();

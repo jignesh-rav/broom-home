@@ -27,8 +27,8 @@ import java.util.Random;
  * DreamView owns the layers; this class holds the drawing and the text.
  */
 final class DesiDream {
-    /** Text on screensavers changes only every 3 minutes (same name/value as DreamView's). */
-    static final long INFO_EVERY = 3 * 60000L;
+    /** Text on screensavers changes every 2 minutes, together with the language (same value as DreamView's). */
+    static final long INFO_EVERY = 2 * 60000L;
 
     private DesiDream() { }
 
@@ -153,17 +153,13 @@ final class DesiDream {
     }
 
     // the Desi Clock's saying: same per-session order, changes every INFO_EVERY
-    private static List<String[]> clockPool;
-    private static String clockLang;
+    private static final java.util.Map<String, List<String[]>> clockPools = new java.util.HashMap<>();
 
     private static String[] clockSaying(Context c, String lang) {
-        if (clockPool == null || !lang.equals(clockLang)) {
-            clockPool = pool(c, lang, true);
-            Collections.shuffle(clockPool);
-            clockLang = lang;
-        }
-        if (clockPool.isEmpty()) return null;
-        return clockPool.get((int) ((System.currentTimeMillis() / INFO_EVERY) % clockPool.size()));
+        List<String[]> p = clockPools.get(lang);
+        if (p == null) { p = pool(c, lang, true); Collections.shuffle(p); clockPools.put(lang, p); }
+        if (p.isEmpty()) return null;
+        return p.get((int) ((System.currentTimeMillis() / INFO_EVERY) % p.size()));
     }
 
     // =================================================================== drawing (UI thread only)
@@ -404,12 +400,25 @@ final class DesiDream {
 
     /** One saying at a time, large and centred, with source and English meaning; fades only when it changes. */
     static final class SayingsView extends View {
-        private final List<String[]> items;
-        private int idx;
+        // one shuffled pool per language; the language comes from Lang.screensaver() for the current 2-minute slot
+        private final java.util.Map<String, List<String[]>> pools = new java.util.HashMap<>();
+        private final java.util.Map<String, Integer> pos = new java.util.HashMap<>();
+        private String[] cur;
+
+        private void pickNext() {
+            Context c = getContext();
+            String lang = Lang.screensaver(c);
+            List<String[]> p = pools.get(lang);
+            if (p == null) { p = pool(c, lang, false); Collections.shuffle(p); pools.put(lang, p); }
+            if (p.isEmpty()) { cur = null; return; }
+            int i = pos.containsKey(lang) ? pos.get(lang) : 0;
+            cur = p.get(i % p.size());
+            pos.put(lang, i + 1);
+        }
         private final Runnable next = new Runnable() {
             @Override public void run() {
                 animate().alpha(0f).setDuration(900).withEndAction(new Runnable() {
-                    @Override public void run() { idx = (idx + 1) % Math.max(1, items.size()); invalidate(); animate().alpha(1f).setDuration(900).start(); }
+                    @Override public void run() { pickNext(); invalidate(); animate().alpha(1f).setDuration(900).start(); }
                 }).start();
                 postDelayed(this, INFO_EVERY);
             }
@@ -417,16 +426,16 @@ final class DesiDream {
 
         SayingsView(Context c) {
             super(c);
-            items = pool(c, Lang.screensaver(c), false);
-            Collections.shuffle(items);
-            postDelayed(next, INFO_EVERY);
+            pickNext();
+            // change on the 2-minute boundaries, so the saying and the corner clock switch language together
+            postDelayed(next, INFO_EVERY - System.currentTimeMillis() % INFO_EVERY + 1500);
         }
 
         @Override protected void onDetachedFromWindow() { super.onDetachedFromWindow(); removeCallbacks(next); }
 
         @Override protected void onDraw(Canvas c) {
-            if (items.isEmpty()) return;
-            String[] q = items.get(idx % items.size());
+            String[] q = cur;
+            if (q == null) return;
             Context ctx = getContext();
             int w = getWidth(), h = getHeight();
             float[] n = nudge(h);

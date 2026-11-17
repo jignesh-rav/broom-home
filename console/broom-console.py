@@ -78,8 +78,11 @@ SCHEMA = [
         ["n_tech", "b", True, "News: Tech"], ["n_ai", "b", True, "News: AI"],
         ["n_space", "b", True, "News: Space"], ["n_markets", "b", True, "News: Market news"]]],
     ["Languages", [
-        ["lang_panchang", "s", "en", "Panchang language", LANGS],
-        ["lang_dream", "s", "gu", "Screensaver sayings language", LANGS],
+        ["lang_panchang", "s", "en", "Panchang (calendar) language", LANGS],
+        ["lang_dream_en", "b", True, "Screensaver rotates through: English"],
+        ["lang_dream_hi", "b", True, "Screensaver rotates through: Hindi"],
+        ["lang_dream_gu", "b", True, "Screensaver rotates through: Gujarati"],
+        ["lang_dream_mr", "b", True, "Screensaver rotates through: Marathi"],
         ["lang_news_hi", "b", True, "Hindi news"], ["lang_news_gu", "b", True, "Gujarati news"],
         ["lang_news_mr", "b", True, "Marathi news"]]],
     ["Pop-ups", [

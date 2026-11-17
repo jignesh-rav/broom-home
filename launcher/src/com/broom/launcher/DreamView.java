@@ -39,8 +39,8 @@ public class DreamView extends FrameLayout {
             "Large clock, date and weather on deep black. Lowest power.",
             "Interesting facts, quotes, and Hindi, Sanskrit, Gujarati & Marathi sayings with meanings.",
             "Time, date, weather and a saying in Gujarati, Hindi, Marathi or English, with native digits (Settings → Language).",
-            "Dohe, abhangs and kahevat in large type, with the poet and an English meaning — a new one every 3 minutes.",
-            "Markets, live cricket, football, tech and space headlines — a new page every 3 minutes.",
+            "Dohe, abhangs and kahevat in large type, with the poet and an English meaning — a new one every 2 minutes, rotating through your screensaver languages.",
+            "Markets, live cricket, football, tech and space headlines — a new page every 2 minutes.",
             "Today's Panchang: tithi, nakshatra, Choghadiya now, Rahu Kaal, sunrise/sunset and coming festivals.",
             "Forts, palaces, temples and landmarks — featured photos from Wikimedia Commons.",
             "Mountains, waterfalls, lakes and coasts (Wikimedia Commons).",
@@ -93,10 +93,10 @@ public class DreamView extends FrameLayout {
     private Thread loader;
     // quotes mode
     private View quote;   // quotes or sayings layer
-    // Briefing interleaved into every style: 3 min style, 3 min briefing tabs, repeat
-    static final long BRIEF_EVERY = 3 * 60000L;
-    /** A photo stays 1 minute; info (briefing pages, quotes) changes every 3 minutes. */
-    static final long PHOTO_EVERY = 60000L, INFO_EVERY = 3 * 60000L;
+    // Briefing interleaved into every style: 2 min style, 2 min Briefing page (a different page each time), repeat
+    static final long BRIEF_EVERY = 2 * 60000L;
+    /** A photo stays 1 minute; info (Briefing pages, quotes, sayings and their language) changes every 2 minutes. */
+    static final long PHOTO_EVERY = 60000L, INFO_EVERY = DesiDream.INFO_EVERY;
     private FrameLayout briefBox;
     private View veil;
     private volatile boolean briefOn;
@@ -776,7 +776,7 @@ public class DreamView extends FrameLayout {
 
     // =================================================================== quotes layer
 
-    /** One fact / quote at a time, centred; fades only when it changes (every 3 min). */
+    /** One fact / quote at a time, centred; fades only when it changes (every 2 min). */
     private final class QuoteView extends View {
         private final java.util.List<String[]> items = new java.util.ArrayList<>();
         private int idx;

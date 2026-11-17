@@ -77,7 +77,8 @@ All of it is calculated on the TV, so it works offline.
 - **Style**: Nebula Drift, Aurora, Warp Speed, Rangoli Mandala, Minimal Clock, Facts & Quotes, Briefing, Panchang, photo packs (Monuments, Nature, Animals, Baby animals, Space), My photos (USB) or **Shuffle**. Shuffle changes style every 10 minutes and goes through all of them (the animations, Facts & Quotes and every photo pack) once each, in random order, before any repeats. **Preview** shows any style straight away
 - **Start screensaver after**: how long with no remote activity
 - **Turn TV off after**: a power saver while the screensaver is running
-- **Briefing inside every screensaver**: every few minutes, swap to a market, score and news page, then back. Market pages only appear while a market is trading (Asia, India, Europe, or the US session in Indian evening hours, on weekdays). The rest of the time you see only scores and news
+- **Briefing inside every screensaver**: every 2 minutes the screensaver switches between its own style (for example Sayings & abhangs) and one Briefing page, a different page each time: Markets, India stocks, US tech & AI stocks, Cricket, Football · AI, Space · Market news, Panchang. Market pages only appear while a market is trading (Asia, India, Europe, or the US session in Indian evening hours, on weekdays); pages for features you've switched off are skipped
+- **Languages** (Settings → Language → Screensaver languages): Desi Clock and Sayings rotate through English, Hindi, Gujarati and Marathi, a different language every 2 minutes in random order, never the same one twice in a row. Untick any you don't want. The Panchang keeps one language of its own
 - **Night power saving**: from midnight to 6 AM, only the Minimal Clock, without the Briefing pages
 
 Photo packs download featured pictures from Wikimedia, with a family-friendly filter, a credit on screen and a 50 MB cache. For **My photos (USB)**, plug in a stick with JPGs.

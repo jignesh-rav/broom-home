@@ -33,13 +33,13 @@ Nothing here needs root or an account. Every change can be undone.
 
 A full tour with the remote is in **[docs/FEATURES.md](docs/FEATURES.md)**.
 
-**Screensavers:** Nebula Drift, Aurora, Warp Speed, Rangoli Mandala, Minimal Clock, Facts & Quotes, Briefing, Panchang, Desi Clock and Sayings (time, date, weather and dohe / abhangs / kahevat in Hindi, Gujarati or Marathi), photo packs (Monuments, Nature, Animals, Baby animals, Space, from Wikimedia featured pictures) and your own photos from a USB stick. Photos change every minute and info every 3 minutes; new photo downloads are capped at 24 every 6 hours
+**Screensavers:** Nebula Drift, Aurora, Warp Speed, Rangoli Mandala, Minimal Clock, Facts & Quotes, Briefing, Panchang, Desi Clock and Sayings (time, date, weather and dohe / abhangs / kahevat, rotating through English, Hindi, Gujarati and Marathi, or the ones you pick), photo packs (Monuments, Nature, Animals, Baby animals, Space, from Wikimedia featured pictures) and your own photos from a USB stick. Photos change every minute, and info and the screensaver language every 2 minutes; new photo downloads are capped at 24 every 6 hours
 
 **Extras**
 - Pop-ups over any app or HDMI input: live scores (a wicket, every 50 runs, goals), market alerts, and updates every 10 min, each on screen for 90 s (market pulse, live score, weather heads-ups, top headline, Panchang, break reminder)
 - Market alerts when an index moves 1% or a watchlist stock moves 5%
 - **Still watching?** (Settings): after 1–6 hours with no remote key, a card counts down (default 180 seconds) and then puts the TV in standby; any key cancels
-- **Settings → Language:** Panchang language, screensaver language and which Indian-language news to show
+- **Settings → Language:** the Panchang (calendar) language, which languages the screensaver rotates through (all four by default), and which Indian-language news to show
 - Sleep timer, tick / click sounds, night mode for the screensaver
 - **Settings → Features** (or **Briefing → Customise**): switch off whole features you don't care about, such as markets, cricket, football, Panchang or any news section. Switched-off features are not downloaded and disappear from home, Briefing, the screensaver and pop-ups.
 - If home ever fails to load, a plain "safe mode" app list appears instead of a black screen
