@@ -54,3 +54,13 @@ adb shell am broadcast -a com.broom.launcher.RESTORE -n com.broom.launcher/.Back
 adb shell am broadcast -a com.broom.launcher.STATUS -n com.broom.launcher/.BackupReceiver   # 18.3+: broom-status.json (version, DNS, network, memory, apps)
 adb shell am broadcast -a com.broom.launcher.RELOAD -n com.broom.launcher/.BackupReceiver   # 18.3+: re-read watchlists, redraw home
 ```
+
+A personal AdGuard DNS address for a limited time (18.4+). Set the address, then an end date in milliseconds (here 30 days from the TV's clock); after it, Broom moves the TV to the free `dns.adguard-dns.com`:
+```bash
+adb shell settings put global private_dns_specifier <id>.d.adguard-dns.com
+adb shell settings put global private_dns_mode hostname
+UNTIL=$(( ($(adb shell date +%s | tr -d '') + 30*86400) * 1000 ))
+echo "{\"dns_main_until\":{\"t\":\"l\",\"v\":\"$UNTIL\"}}" > until.json
+adb push until.json /sdcard/Android/data/com.broom.launcher/files/broom-settings.json
+adb shell am broadcast -a com.broom.launcher.RESTORE -n com.broom.launcher/.BackupReceiver
+```

@@ -53,7 +53,7 @@ If either is missing, walk them through README Step 1 and wait for the IP. Don't
 
 ## Only with the person's explicit yes
 - **Debloat** (installer Step 2): always run the preview first and get their answer (install step 4). Never switch off a package that isn't in the lists or that they said to keep. On a brand without its own list, Step 2 only finds the Google packages; for the maker's own bloat follow "Non-Xiaomi TVs" below.
-- **Ad-blocking DNS** (`-AdBlockDns` / `--adblock-dns`): it changes DNS for the whole TV (AdGuard, `dns.adguard-dns.com`). Broom's network monitor falls back to Cloudflare (`one.one.one.one`) while AdGuard is unreachable and switches back afterwards; Android allows only one Private DNS name, so there is no other way to have a backup.
+- **Ad-blocking DNS** (`-AdBlockDns` / `--adblock-dns`): it changes DNS for the whole TV (AdGuard, `dns.adguard-dns.com`). Broom's network monitor falls back to Cloudflare (`one.one.one.one`) while AdGuard is unreachable and switches back afterwards; Android allows only one Private DNS name, so there is no other way to have a backup. A personal `<id>.d.adguard-dns.com` address from someone's AdGuard account gets the same backup (18.4+), and can be given an end date (`docs/CUSTOMISE.md`). Never put a personal address in the repo.
 - **Uninstalling any app.**
 - **Rebooting the TV**, because it may interrupt someone watching.
 

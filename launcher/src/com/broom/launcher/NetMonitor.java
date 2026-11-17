@@ -19,8 +19,10 @@ import java.util.List;
  * Network monitor (runs in the always-on helper service):
  *  - every 30 min: reachability + latency probe (HTTP 204, ~0 bytes), Wi-Fi signal and link speed
  *  - every 1 h, only while the TV is idle: 5 MB download speed test (up to ~120 MB/day); also on demand
- *  - DNS backup: Android's Private DNS takes one name only, so when it is AdGuard and AdGuard can't be
- *    reached (but Cloudflare can), it switches to Cloudflare, and back to AdGuard once AdGuard answers again.
+ *  - DNS backup: Android's Private DNS takes one name only, so when it is AdGuard (the public one or a
+ *    personal *.d.adguard-dns.com address) and AdGuard can't be reached (but Cloudflare can), it switches to
+ *    Cloudflare, and back to that same AdGuard address once it answers again. A personal address can carry an
+ *    end date (pref dns_main_until); after it, the TV goes back to the free public AdGuard.
  *    After a failed probe the next one runs in 2 min, so an outage is caught quickly.
  * Keeps 24 h of samples on disk for the Network screen and the home status line.
  */
@@ -88,23 +90,59 @@ final class NetMonitor {
     }
 
     /** AdGuard -> Cloudflare when AdGuard is down, and back. Only touches a Private DNS that Broom set up. */
+    static boolean isAdGuard(String h) { return h != null && (h.equals(DNS_MAIN) || h.endsWith(".adguard-dns.com")); }
+    /** A personal AdGuard DNS address from an AdGuard account, like abcd1234.d.adguard-dns.com. */
+    static boolean isPersonal(String h) { return h != null && h.endsWith(".d.adguard-dns.com"); }
+
     static void dnsBackup(Context c, boolean internetOk) {
         android.content.ContentResolver cr = c.getContentResolver();
         String mode = android.provider.Settings.Global.getString(cr, "private_dns_mode");
         String host = android.provider.Settings.Global.getString(cr, "private_dns_specifier");
         if (!"hostname".equals(mode) || host == null) return;
         android.content.SharedPreferences p = Theme.prefs(c);
-        if (DNS_MAIN.equals(host)) {
-            if (internetOk || reachable(MAIN_IPS) || !reachable(BACKUP_IPS)) return;   // AdGuard fine, or the whole internet is down
-            android.provider.Settings.Global.putString(cr, "private_dns_specifier", DNS_BACKUP);
-            p.edit().putBoolean("dns_on_backup", true).putLong("dns_switch_time", System.currentTimeMillis()).apply();
-            append(c, "dns_log.csv", System.currentTimeMillis() + ",backup", 50);
-        } else if (DNS_BACKUP.equals(host) && p.getBoolean("dns_on_backup", false)) {
-            if (!reachable(MAIN_IPS)) return;
+        long now = System.currentTimeMillis();
+        String saved = p.getString("dns_main_host", null);
+        boolean backupNow = DNS_BACKUP.equals(host) && p.getBoolean("dns_on_backup", false);
+
+        // A personal address with an end date ("dns_main_until", set from the laptop): when it's past,
+        // go back to the free public AdGuard, whether the personal one is in use or waiting behind the backup.
+        long until = p.getLong("dns_main_until", 0);
+        if (until > 0 && now > until && (isPersonal(host) || (backupNow && isPersonal(saved)))) {
             android.provider.Settings.Global.putString(cr, "private_dns_specifier", DNS_MAIN);
-            p.edit().putBoolean("dns_on_backup", false).putLong("dns_switch_time", System.currentTimeMillis()).apply();
-            append(c, "dns_log.csv", System.currentTimeMillis() + ",main", 50);
+            p.edit().remove("dns_main_until").remove("dns_main_ips").putString("dns_main_host", DNS_MAIN).putBoolean("dns_on_backup", false)
+                    .putLong("dns_switch_time", now).apply();
+            append(c, "dns_log.csv", now + ",personal-ended", 50);
+            return;
         }
+
+        if (isAdGuard(host)) {
+            if (internetOk) {   // healthy: remember this address and its IPs, to test and return to while DNS is down
+                StringBuilder ips = new StringBuilder();
+                try { for (java.net.InetAddress ia : java.net.InetAddress.getAllByName(host)) if (ia instanceof java.net.Inet4Address) ips.append(ips.length() > 0 ? "," : "").append(ia.getHostAddress()); }
+                catch (Exception ignored) { }
+                android.content.SharedPreferences.Editor e = p.edit().putString("dns_main_host", host);
+                if (ips.length() > 0) e.putString("dns_main_ips", ips.toString());
+                e.apply();
+                return;
+            }
+            if (reachable(mainIps(p, host)) || !reachable(BACKUP_IPS)) return;   // AdGuard fine, or the whole internet is down
+            android.provider.Settings.Global.putString(cr, "private_dns_specifier", DNS_BACKUP);
+            p.edit().putBoolean("dns_on_backup", true).putString("dns_main_host", host).putLong("dns_switch_time", now).apply();
+            append(c, "dns_log.csv", now + ",backup", 50);
+        } else if (backupNow) {
+            String back = isAdGuard(saved) ? saved : DNS_MAIN;
+            if (!reachable(mainIps(p, back))) return;
+            android.provider.Settings.Global.putString(cr, "private_dns_specifier", back);
+            p.edit().putBoolean("dns_on_backup", false).putLong("dns_switch_time", now).apply();
+            append(c, "dns_log.csv", now + ",main", 50);
+        }
+    }
+
+    /** Addresses to test an AdGuard host on while DNS is down: the IPs seen when it last worked, else AdGuard's own. */
+    private static String[] mainIps(android.content.SharedPreferences p, String host) {
+        String ips = host.equals(p.getString("dns_main_host", null)) ? p.getString("dns_main_ips", "") : "";
+        if (!ips.isEmpty()) return ips.split(",");
+        return isPersonal(host) ? new String[]{"94.140.14.49", "94.140.14.59"} : MAIN_IPS;
     }
 
     /** DNS-over-TLS port open on any of these addresses (by IP, so it works while DNS itself is broken). */

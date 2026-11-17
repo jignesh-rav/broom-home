@@ -289,7 +289,12 @@ function renderCard(id) {
   if (b.mem) add("Memory", b.mem.avail_mb + " MB free of " + b.mem.total_mb + " MB" + (b.mem.low ? " (low!)" : ""));
   if (d.storage_free_mb != null) add("Storage", (d.storage_free_mb / 1024).toFixed(1) + " GB free");
   let dns = "Router's DNS";
-  if (d.dns_mode === "hostname") dns = d.dns_host === "dns.adguard-dns.com" ? "AdGuard" : d.dns_host === "one.one.one.one" ? (b.dns && b.dns.on_backup ? "Cloudflare (backup: AdGuard is down)" : "Cloudflare") : d.dns_host;
+  if (d.dns_mode === "hostname") {
+    const until = b.dns && b.dns.personal_until ? new Date(b.dns.personal_until).toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "";
+    dns = d.dns_host === "dns.adguard-dns.com" ? "AdGuard"
+      : /\.d\.adguard-dns\.com$/.test(d.dns_host) ? "AdGuard, your account" + (until ? " (until " + until + ", then the free AdGuard)" : "")
+      : d.dns_host === "one.one.one.one" ? (b.dns && b.dns.on_backup ? "Cloudflare (backup: AdGuard is down)" : "Cloudflare") : d.dns_host;
+  }
   add("DNS", dns);
   if (b.net && b.net.checks) {
     const n = b.net, up = (n.up * 100 / n.checks).toFixed(n.up === n.checks ? 0 : 1);

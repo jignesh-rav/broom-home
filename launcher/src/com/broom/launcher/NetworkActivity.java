@@ -194,6 +194,10 @@ public class NetworkActivity extends Activity {
         String host = android.provider.Settings.Global.getString(getContentResolver(), "private_dns_specifier");
         if (!"hostname".equals(mode) || host == null) return "router DNS";
         if (NetMonitor.DNS_MAIN.equals(host)) return "AdGuard DNS";
+        if (NetMonitor.isPersonal(host)) {
+            long until = Theme.prefs(this).getLong("dns_main_until", 0);
+            return "AdGuard (personal" + (until > 0 ? ", until " + new java.text.SimpleDateFormat("d MMM", java.util.Locale.US).format(new java.util.Date(until)) : "") + ")";
+        }
         if (NetMonitor.DNS_BACKUP.equals(host)) return Theme.prefs(this).getBoolean("dns_on_backup", false) ? "Cloudflare (backup)" : "Cloudflare DNS";
         return host;
     }

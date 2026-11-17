@@ -139,7 +139,8 @@ A small card appears in the bottom-right corner over whatever is on: YouTube, Ne
   - latency chart, outages and 24 h uptime
   - Wi-Fi signal, link speed and the DNS in use
   - a speed test every hour when the TV is idle, or **Run speed test now**
-- **DNS backup:** Android TV takes only one Private DNS name. With the ad-blocking DNS on (AdGuard), Broom switches the TV to Cloudflare (`one.one.one.one`) if AdGuard stops answering, and back to AdGuard once it answers again. It never touches a DNS you set yourself.
+- **DNS backup:** Android TV takes only one Private DNS name. With the ad-blocking DNS on (AdGuard), Broom switches the TV to Cloudflare (`one.one.one.one`) if AdGuard stops answering, and back to AdGuard once it answers again. It never touches a DNS you set yourself, other than AdGuard.
+- **Your own AdGuard DNS account:** a personal address from the AdGuard DNS dashboard (`<id>.d.adguard-dns.com`, the DNS-over-TLS one) works the same way, Cloudflare backup included, and gives you AdGuard's statistics and query log for that TV. It can have an end date: after it, Broom switches the TV to the free public AdGuard by itself (see [CUSTOMISE.md](CUSTOMISE.md#settings-over-adb)).
 - **TV stats & savings**: memory and storage now, the biggest memory users, and all packages. The "before" numbers come from the Xiaomi Mi TV this was built on, not from your TV, unless Claude has rebuilt the page for your TV (see [COMPATIBILITY.md](COMPATIBILITY.md#on-non-xiaomi-tvs-whats-the-same-and-what-needs-extra-steps)).
 
 ## If something goes wrong

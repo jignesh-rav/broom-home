@@ -89,7 +89,9 @@ public class BackupReceiver extends BroadcastReceiver {
         o.put("dns", new JSONObject()
                 .put("mode", String.valueOf(android.provider.Settings.Global.getString(cr, "private_dns_mode")))
                 .put("host", String.valueOf(android.provider.Settings.Global.getString(cr, "private_dns_specifier")))
-                .put("on_backup", Theme.prefs(c).getBoolean("dns_on_backup", false)));
+                .put("on_backup", Theme.prefs(c).getBoolean("dns_on_backup", false))
+                .put("main_host", Theme.prefs(c).getString("dns_main_host", ""))
+                .put("personal_until", Theme.prefs(c).getLong("dns_main_until", 0)));
         java.util.List<NetMonitor.Sample> ss = NetMonitor.samples(c);
         int up = 0; long lat = 0;
         for (NetMonitor.Sample s : ss) if (s.ok) { up++; lat += s.lat; }
