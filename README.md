@@ -16,6 +16,7 @@ Nothing here needs root or an account. Every change can be undone.
 
 **Home screen**
 - Big clock, time-of-day greeting (English / हिन्दी / ગુજરાતી), date
+- Icon menu: a Broom gear (Settings) at the top and a slim icon rail on the left (Theme, Briefing, Panchang, Weather, Screensaver, Network with live signal bars), each with a label when selected
 - Weather for your area with feels-like, humidity, wind and an air-quality warning; hourly and 7-day strip
 - Favourites and Recently used rows, HDMI inputs that show the connected device and whether it's on (HDMI-CEC)
 - Smart power-on: switch on from your Fire TV or set-top box remote and the TV lands on that HDMI input; switch on with the TV remote and you get Broom ([how it works](docs/FEATURES.md#hdmi-devices-and-power-on-hdmi-cec))
@@ -24,24 +25,26 @@ Nothing here needs root or an account. Every change can be undone.
 - Festival decorations on the day: Diwali, Navratri, Uttarayan, Holi, Christmas, New Year, Independence / Republic Day and more
 
 **Screens**
-- **Briefing:** Indian, US and global indices, sector and stock trackers with 5-day charts, an editable watchlist, cricket and football scores, and news (Cricket, Football, Tech, AI, Space, Markets). It can open by itself on the first switch-on of the morning.
+- **Briefing:** Indian, US and global indices, sector and stock trackers with 5-day charts, an editable watchlist, cricket and football scores, and news (Cricket, Football, Tech, AI, Space, Markets, plus a **Regional** tab with Hindi, Gujarati and Marathi headlines). It can open by itself on the first switch-on of the morning.
 - **Weather:** now, warnings, a 3-day walk / jog planner that takes air quality into account, 24 h and 14-day forecasts
-- **Panchang:** tithi, nakshatra, yoga, karana, Choghadiya, Rahu Kaal, sunrise / sunset and upcoming festivals, worked out offline for your location
+- **Panchang:** tithi, nakshatra, yoga, karana, Choghadiya, Rahu Kaal, sunrise / sunset and upcoming festivals, worked out offline for your location, in English, हिन्दी, ગુજરાતી or मराठी
 - **Network monitor:** uptime, latency chart, outages, speed test
 - **TV stats:** RAM, storage and CPU before vs after
 
 A full tour with the remote is in **[docs/FEATURES.md](docs/FEATURES.md)**.
 
-**Screensavers:** Nebula Drift, Aurora, Warp Speed, Rangoli Mandala, Minimal Clock, Facts & Quotes, Briefing, Panchang, photo packs (Monuments, Nature, Animals, Baby animals, Space, from Wikimedia featured pictures) and your own photos from a USB stick
+**Screensavers:** Nebula Drift, Aurora, Warp Speed, Rangoli Mandala, Minimal Clock, Facts & Quotes, Briefing, Panchang, Desi Clock and Sayings (time, date, weather and dohe / abhangs / kahevat in Hindi, Gujarati or Marathi), photo packs (Monuments, Nature, Animals, Baby animals, Space, from Wikimedia featured pictures) and your own photos from a USB stick. Photos change every minute and info every 3 minutes; new photo downloads are capped at 24 every 6 hours
 
 **Extras**
 - Pop-ups over any app or HDMI input: live scores (a wicket, every 50 runs, goals), market alerts, and optional updates every 15–60 min (market pulse, live score, weather heads-ups, top headline, Panchang, break reminder)
 - Market alerts when an index moves 1% or a watchlist stock moves 5%
+- **Still watching?** (Settings): after 1–6 hours with no remote key, a card counts down (default 180 seconds) and then puts the TV in standby; any key cancels
+- **Settings → Language:** Panchang language, screensaver language and which Indian-language news to show
 - Sleep timer, tick / click sounds, night mode for the screensaver
 - **Settings → Features** (or **Briefing → Customise**): switch off whole features you don't care about, such as markets, cricket, football, Panchang or any news section. Switched-off features are not downloaded and disappear from home, Briefing, the screensaver and pop-ups.
 - If home ever fails to load, a plain "safe mode" app list appears instead of a black screen
 
-All data comes from free public feeds that need no API keys: Open-Meteo, Yahoo Finance (delayed, display only), ESPNcricinfo, ESPN, BBC, NASA, Ars Technica, TechCrunch, MIT Technology Review, Google News and Wikimedia.
+All data comes from free public feeds that need no API keys: Open-Meteo, Yahoo Finance (delayed, display only), ESPNcricinfo, ESPN, BBC (incl. BBC Hindi / Gujarati / Marathi), Dainik Bhaskar, Amar Ujala, Divya Bhaskar, ABP Asmita, ABP Majha, TV9 Marathi, NASA, Ars Technica, TechCrunch, MIT Technology Review, Google News and Wikimedia.
 
 ## Screenshots
 

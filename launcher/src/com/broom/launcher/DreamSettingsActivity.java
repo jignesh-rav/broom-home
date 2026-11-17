@@ -68,7 +68,7 @@ public class DreamSettingsActivity extends Activity {
                 }
             });
             row.addView(prev, margin());
-            TextView d = Ui.text(this, DreamView.MODE_DESC[i], 12, th.dim, th.bodyFont);
+            TextView d = Ui.text(this, DreamView.MODE_DESC[i] + (DesiDream.owns(m) ? "  Now: " + Lang.label(Lang.screensaver(this)) : ""), 12, th.dim, th.bodyFont);
             d.setPadding(Ui.dp(this, 16), 0, 0, 0);
             row.addView(d, new LinearLayout.LayoutParams(0, -2, 1));
             col.addView(row);

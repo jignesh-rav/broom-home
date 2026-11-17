@@ -31,6 +31,7 @@ import java.util.Set;
  * Data for the Briefing screen, home ticker and Briefing screensaver.
  * Markets: Yahoo Finance public quote feed (delayed, display only). Live cricket: Cricinfo live-score RSS.
  * Headlines: Cricinfo, BBC Sport/Tech, NASA, Ars Technica, Google News. Headlines + source + time only.
+ * Hindi / Gujarati / Marathi headlines (sections "hi", "gu", "mr", on/off in Settings → Language): BBC and local papers + Google News.
  * Everything is cached on disk; refreshes happen on a background thread only when something is visible.
  */
 final class Briefing {
@@ -251,9 +252,33 @@ final class Briefing {
             {"ai", "https://www.technologyreview.com/topic/artificial-intelligence/feed", "MIT Tech Review"},
             {"ai", "https://arstechnica.com/ai/feed/", "Ars Technica"},
             {"ai", "https://news.google.com/rss/search?q=%22artificial+intelligence%22+OR+%22generative+AI%22+OR+OpenAI+OR+Anthropic+OR+%22AI+model%22+-bitcoin+-crypto&hl=en-IN&gl=IN&ceid=IN:en", ""},
-            {"markets", "https://news.google.com/rss/search?q=Sensex+OR+Nifty+OR+%22stock+market%22&hl=en-IN&gl=IN&ceid=IN:en", ""}};
-    static final String[] SECTIONS = {"cricket", "football", "tech", "ai", "space", "markets"};
-    static final String[] SECTION_TITLES = {"Cricket", "Football", "Tech", "AI", "Space", "Market news"};
+            {"markets", "https://news.google.com/rss/search?q=Sensex+OR+Nifty+OR+%22stock+market%22&hl=en-IN&gl=IN&ceid=IN:en", ""},
+            // Indian languages (a few top stories from each; shown only when switched on in Settings → Language)
+            {"hi", "https://feeds.bbci.co.uk/hindi/rss.xml", "BBC हिन्दी"},
+            {"hi", "https://www.bhaskar.com/rss-v1--category-1061.xml", "दैनिक भास्कर"},
+            {"hi", "https://www.amarujala.com/rss/breaking-news.xml", "अमर उजाला"},
+            {"hi", "https://news.google.com/rss?hl=hi&gl=IN&ceid=IN:hi", ""},
+            {"gu", "https://feeds.bbci.co.uk/gujarati/rss.xml", "BBC ગુજરાતી"},
+            {"gu", "https://www.divyabhaskar.co.in/rss-v1--category-1037.xml", "દિવ્ય ભાસ્કર"},
+            {"gu", "https://gujarati.abplive.com/home/feed", "ABP અસ્મિતા"},
+            {"gu", "https://news.google.com/rss?hl=gu&gl=IN&ceid=IN:gu", ""},
+            {"mr", "https://feeds.bbci.co.uk/marathi/rss.xml", "BBC मराठी"},
+            {"mr", "https://marathi.abplive.com/home/feed", "ABP माझा"},
+            {"mr", "https://www.tv9marathi.com/feed", "TV9 मराठी"},
+            {"mr", "https://news.google.com/rss?hl=mr&gl=IN&ceid=IN:mr", ""}};
+    static final String[] SECTIONS = {"cricket", "football", "tech", "ai", "space", "markets", Lang.HI, Lang.GU, Lang.MR};
+    static final String[] SECTION_TITLES = {"Cricket", "Football", "Tech", "AI", "Space", "Market news",
+            "हिन्दी समाचार", "ગુજરાતી સમાચાર", "मराठी बातम्या"};
+
+    /** Hindi / Gujarati / Marathi headline section (switched on or off in Settings → Language)? */
+    static boolean isLang(String section) { return Lang.HI.equals(section) || Lang.GU.equals(section) || Lang.MR.equals(section); }
+
+    /** Language sections that are on, e.g. "hi,gu,"; news is refetched when this differs from the cached set. */
+    private static String newsLangs(Context c) {
+        StringBuilder b = new StringBuilder();
+        for (String s : SECTIONS) if (isLang(s) && Features.news(c, s)) b.append(s).append(',');
+        return b.toString();
+    }
 
     private static final String[] INTL = {"india", "australia", "england", "south africa", "new zealand", "pakistan", "sri lanka",
             "bangladesh", "west indies", "afghanistan", "zimbabwe", "ireland", "netherlands", "scotland", "nepal", "uae", "usa", "oman"};
@@ -278,7 +303,9 @@ final class Briefing {
                 if (Features.on(c, Features.MARKETS)) try { if (stale(c, "markets", marketsMaxAge())) fetchMarkets(c); } catch (Exception ignored) { failed(c, "markets"); }
                 if (Features.on(c, Features.CRICKET)) try { if (stale(c, "scores", 3 * 60000)) fetchScores(c); } catch (Exception ignored) { }
                 if (Features.on(c, Features.FOOTBALL)) try { if (stale(c, "football", footballLive(c) ? 3 * 60000 : 30 * 60000)) fetchFootballNow(c); } catch (Exception ignored) { }
-                if (news && Features.anyNews(c)) try { if (stale(c, "news", 30 * 60000)) fetchNews(c); } catch (Exception ignored) { }
+                if (news && Features.anyNews(c)) try {
+                    if (stale(c, "news", 30 * 60000) || !newsLangs(c).equals(Theme.prefs(c).getString("news_langs", ""))) fetchNews(c);
+                } catch (Exception ignored) { }
                 if (cb != null) new Handler(Looper.getMainLooper()).post(new Runnable() { @Override public void run() { cb.done(); } });
             }
         }).start();
@@ -371,17 +398,18 @@ final class Briefing {
         JSONObject out = new JSONObject();
         for (String sec : SECTIONS) out.put(sec, new JSONArray());
         Set<String> seen = new HashSet<>();
+        String langs = newsLangs(c);
         for (String[] f : FEEDS) {
             if (!Features.news(c, f[0])) continue;
             try {
-                for (String[] it : rss(f[1], 12)) {
+                for (String[] it : rss(f[1], isLang(f[0]) ? 3 : 12)) {     // language sections: each outlet's top 3
                     String title = it[0].trim(), source = f[2];
                     if (source.isEmpty()) {          // Google News: "Headline - Source"
                         int k = title.lastIndexOf(" - ");
                         if (k > 0) { source = title.substring(k + 3); title = title.substring(0, k); }
                         else source = "Google News";
                     }
-                    String key = title.toLowerCase(Locale.US).replaceAll("[^a-z0-9]", "");
+                    String key = title.toLowerCase(Locale.US).replaceAll("[^\\p{L}\\p{M}\\p{N}]", "");   // keeps Devanagari / Gujarati
                     if (title.length() < 12 || !seen.add(key)) continue;
                     JSONObject o = new JSONObject();
                     o.put("t", title);
@@ -405,6 +433,7 @@ final class Briefing {
             out.put(sec, s);
         }
         write(c, "news", out.toString());
+        Theme.prefs(c).edit().putString("news_langs", langs).apply();
     }
 
     // ------------------------------------------------------------------ readers

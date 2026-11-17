@@ -162,6 +162,7 @@ public class KeyRemapService extends AccessibilityService {
         pulse.start();
         net = new NetMonitor(this);
         net.start();
+        StillWatching.start(this);   // "Still watching?" standby
         // a timer left over from before this start (crash, update, standby) is discarded
         long at = Theme.prefs(this).getLong("sleep_at", 0);
         if (at > 0 && at < System.currentTimeMillis() + 60000L) Theme.prefs(this).edit().remove("sleep_at").commit();
@@ -181,6 +182,7 @@ public class KeyRemapService extends AccessibilityService {
         if (alerts != null) alerts.stop();
         if (pulse != null) pulse.stop();
         if (net != null) net.stop();
+        StillWatching.stop();
         h.removeCallbacks(sleepCheck);
         super.onDestroy();
     }
@@ -191,6 +193,7 @@ public class KeyRemapService extends AccessibilityService {
             sleepWarned = false;
             if (popup != null) popup.card("💤  SLEEP TIMER", "Cancelled", 0xFF4CD964);
         }
+        if (StillWatching.onKey(e)) return true;   // restarts its idle clock; swallows the key that dismisses its card
         if (!keys(this).contains(e.getKeyCode())) return false;
         if (e.getAction() == KeyEvent.ACTION_UP) goHome();
         return true;
@@ -200,6 +203,7 @@ public class KeyRemapService extends AccessibilityService {
         if (e.getEventType() != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return;
         String pkg = String.valueOf(e.getPackageName());
         if (!pkg.equals("android") && !pkg.equals("com.android.systemui")) { lastPkg = pkg; if (popup != null) popup.foreground = pkg; if (pulse != null) pulse.foreground = pkg; if (net != null) net.foreground = pkg; }
+        StillWatching.window(pkg);
         if (!"com.mitv.tvhome.atv".equals(pkg)) return;
         String cls = String.valueOf(e.getClassName());
         String simple = cls.substring(cls.lastIndexOf('.') + 1);

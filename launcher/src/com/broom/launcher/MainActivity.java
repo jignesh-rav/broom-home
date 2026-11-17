@@ -211,7 +211,7 @@ public class MainActivity extends Activity {
         }
 
         Weather.refresh(this, false, wxListener);
-        if (lastFocusedPkg != null) restore = content.findViewWithTag(lastFocusedPkg);
+        if (lastFocusedPkg != null) restore = ((View) scroll.getParent()).findViewWithTag(lastFocusedPkg);   // incl. the side rail
         final View target = restore != null ? restore : firstFocus;
         if (target != null) target.post(new Runnable() { @Override public void run() { target.requestFocus(); } });
         updateClock();
@@ -264,44 +264,65 @@ public class MainActivity extends Activity {
         status.setPadding(0, Ui.dp(this, 6), 0, 0);
         right.addView(status);
 
-        LinearLayout btns = new LinearLayout(this);
-        btns.setOrientation(LinearLayout.HORIZONTAL);
-        btns.setPadding(0, Ui.dp(this, 10), 0, 0);
-        btns.setClipChildren(false);
-        themeBtn = Ui.pill(this, "Theme: " + Theme.label(this), theme, new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                lastFocusedPkg = "btn:theme";
-                dirty = true;
-                safeStart(new Intent(MainActivity.this, ThemeGalleryActivity.class));
-            }
+        // Header buttons are icons now (Icons.java): the Broom gear (Settings) sits top-right beside the
+        // weather; the other actions live on a slim rail floating at the left edge, so no row is used.
+        ViewGroup root = (ViewGroup) scroll.getParent();
+        if (rail != null) root.removeView(rail);
+        if (tip != null) root.removeView(tip.view());
+        tip = new Icons.Tip(this, theme);
+        rail = new Icons.Rail(this, theme);
+        railBtn(Icons.THEME, "btn:theme", new Intent(this, ThemeGalleryActivity.class), true);
+        if (Features.anyBriefing(this)) railBtn(Icons.BRIEF, "btn:brief", new Intent(this, BriefingActivity.class), false);
+        if (Features.on(this, Features.PANCHANG)) railBtn(Icons.PANCHANG, "btn:panchang", new Intent(this, PanchangActivity.class), false);
+        railBtn(Icons.WEATHER, "btn:weather", new Intent(this, WeatherActivity.class), false);
+        railBtn(Icons.DREAM, "btn:dream", new Intent(this, DreamSettingsActivity.class), false);
+        railBtn(Icons.NETWORK, "btn:network", new Intent(this, NetworkActivity.class), false);
+        FrameLayout.LayoutParams rl = new FrameLayout.LayoutParams(-2, -2, Gravity.START | Gravity.CENTER_VERTICAL);
+        rl.leftMargin = Ui.dp(this, 10);
+        root.addView(rail, rl);
+        root.addView(tip.view(), new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.START));
+        // keep the grid clear of the rail (and of a focused tile's zoom)
+        content.setPadding(Ui.dp(this, 70), content.getPaddingTop(), content.getPaddingRight(), content.getPaddingBottom());
+        pendingButtons = null;
+
+        Icons.Btn gear = new Icons.Btn(this, theme, Icons.GEAR, true, tip);
+        gear.setTag("btn:settings");
+        gear.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) { Sounds.click(MainActivity.this); lastFocusedPkg = "btn:settings"; quickSettings(); }
         });
-        themeBtn.setTag("btn:theme");
-        btns.addView(themeBtn);
-        if (Features.anyBriefing(this)) addBtn(btns, "Briefing", "btn:brief", new Intent(this, BriefingActivity.class));
-        if (Features.on(this, Features.PANCHANG)) addBtn(btns, "Panchang", "btn:panchang", new Intent(this, PanchangActivity.class));
-        TextView cityBtn = Ui.pill(this, "Weather", theme, new View.OnClickListener() {
-            @Override public void onClick(View v) { lastFocusedPkg = "btn:weather"; safeStart(new Intent(MainActivity.this, WeatherActivity.class)); }
-        });
-        cityBtn.setTag("btn:weather");
-        LinearLayout.LayoutParams cl2 = new LinearLayout.LayoutParams(-2, -2);
-        cl2.leftMargin = Ui.dp(this, 10);
-        btns.addView(cityBtn, cl2);
-        addBtn(btns, "Screensaver", "btn:dream", new Intent(this, DreamSettingsActivity.class));
-        TextView qs = Ui.pill(this, "Settings", theme, new View.OnClickListener() {
-            @Override public void onClick(View v) { lastFocusedPkg = "btn:settings"; quickSettings(); }
-        });
-        qs.setTag("btn:settings");
-        LinearLayout.LayoutParams qsl = new LinearLayout.LayoutParams(-2, -2);
-        qsl.leftMargin = Ui.dp(this, 10);
-        btns.addView(qs, qsl);
-        pendingButtons = btns;
-        h.addView(right, new LinearLayout.LayoutParams(-2, -2));
+        LinearLayout topRight = new LinearLayout(this);
+        topRight.setOrientation(LinearLayout.HORIZONTAL);
+        topRight.setClipChildren(false);
+        topRight.addView(right, new LinearLayout.LayoutParams(-2, -2));
+        LinearLayout.LayoutParams gl = new LinearLayout.LayoutParams(gear.size, gear.size);
+        gl.leftMargin = Ui.dp(this, 12);
+        gl.topMargin = -Ui.dp(this, 4);
+        topRight.addView(gear, gl);
+        h.addView(topRight, new LinearLayout.LayoutParams(-2, -2));
 
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
         lp.bottomMargin = Ui.dp(this, 6);
         h.setLayoutParams(lp);
         h.setClipChildren(false);
         return h;
+    }
+
+    private Icons.Rail rail;
+    private Icons.Tip tip;
+
+    /** A round icon on the side rail; its tag keeps focus-restore working after the screen closes. */
+    private void railBtn(int kind, final String tag, final Intent i, final boolean redraw) {
+        Icons.Btn b = new Icons.Btn(this, theme, kind, false, tip);
+        b.setTag(tag);
+        b.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                Sounds.click(MainActivity.this);
+                lastFocusedPkg = tag;
+                if (redraw) dirty = true;
+                safeStart(i);
+            }
+        });
+        rail.add(b);
     }
 
     private String powerLabel() {
@@ -738,35 +759,7 @@ public class MainActivity extends Activity {
         if (m == panchangMin && panchang.getText().length() > 0) return;
         panchangMin = m;
         try {
-            Panchang p = Panchang.now();
-            android.text.SpannableStringBuilder b = new android.text.SpannableStringBuilder();
-            b.append(p.gujarati());
-            b.setSpan(new android.text.style.ForegroundColorSpan(0xFFFFD166), 0, b.length(), 0);
-            String tn = (p.tithiIdx == 14 || p.tithiIdx == 29) ? p.tithiName() : (p.shukla() ? "Shukla " : "Krishna ") + p.tithiName();
-            b.append("  ·  ").append(tn);
-            if (p.festival != null) {
-                b.append("  ·  ");
-                int st = b.length();
-                b.append(p.festival);
-                b.setSpan(new android.text.style.ForegroundColorSpan(0xFFFFB0C8), st, b.length(), 0);
-            }
-            // current Choghadiya (and Rahu Kaal when it is on)
-            long now = System.currentTimeMillis();
-            Vedic.Day vd = Vedic.today(this);
-            Vedic.Slot cs = Vedic.current(vd, now);
-            if (cs != null) {
-                b.append("  ·  ");
-                int st = b.length();
-                b.append(cs.name).append(" till ").append(Vedic.hm(cs.to));
-                b.setSpan(new android.text.style.ForegroundColorSpan(cs.quality > 0 ? 0xFF4CD964 : cs.quality == 0 ? 0xFFFFD166 : 0xFFFF6B6B), st, b.length(), 0);
-            }
-            if (now >= vd.rahu.from && now < vd.rahu.to) {
-                b.append("  ·  ");
-                int st = b.length();
-                b.append("Rahu Kaal till ").append(Vedic.hm(vd.rahu.to));
-                b.setSpan(new android.text.style.ForegroundColorSpan(0xFFFF6B6B), st, b.length(), 0);
-            }
-            panchang.setText(b);
+            panchang.setText(PanchangLang.homeLine(this));   // in the chosen Panchang language
         } catch (Exception e) { panchang.setText(""); }
     }
 
@@ -915,7 +908,8 @@ public class MainActivity extends Activity {
                 "Themes", "Weather", "Screensaver", "Broom sounds: " + (snd ? "On  (turn off)" : "Off  (turn on)"), "All settings",
                 "TV stats & savings", powerLabel() + "  (switch)", "Briefing",
                 "Live score pop-ups: " + (ScorePopup.enabled(this) ? "On  (turn off)" : "Off  (turn on)"), "Watchlist & market alerts",
-                "Network monitor", sleepLabel(), "Features: choose what to show", "Pop-up updates (market, cricket, weather, news…)"};
+                "Network monitor", sleepLabel(), "Features: choose what to show", "Pop-up updates (market, cricket, weather, news…)",
+                "Language: " + Lang.summary(this), StillWatching.label(this)};
         new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
                 .setTitle("Quick settings")
                 .setItems(labels, new DialogInterface.OnClickListener() {
@@ -953,6 +947,12 @@ public class MainActivity extends Activity {
                                 });
                                 return;
                             case 18: pulseDialog(); return;
+                            case 19:
+                                Lang.dialog(MainActivity.this, new Runnable() {
+                                    @Override public void run() { lastFocusedPkg = "btn:settings"; dirty = true; rebuild(); refreshTicker(); }
+                                });
+                                return;
+                            case 20: StillWatching.dialog(MainActivity.this); return;
                             case 13: {
                                 boolean on = !ScorePopup.enabled(MainActivity.this);
                                 Theme.prefs(MainActivity.this).edit().putBoolean("score_popups", on).apply();
@@ -1073,8 +1073,25 @@ public class MainActivity extends Activity {
         String fg = null;
         try { fg = Festive.greeting(Panchang.now()); } catch (Exception ignored) { }
         greet.setText(fg != null ? fg : g[0] + "  ·  " + (Calendar.getInstance().get(Calendar.MINUTE) % 2 == 0 ? g[1] : g[2]));
+        fitGreet();
         date.setText(DateFormat.format("EEEE, d MMMM", now));
         showPanchang();
+    }
+
+    /** The greeting is one line; shrink it (never grow past 22sp) so long greetings fit the column beside the rail. */
+    private void fitGreet() {
+        if (greet == null) return;
+        greet.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 22);
+        final View col = (View) greet.getParent();
+        if (col == null) return;
+        if (col.getWidth() <= 0) {
+            col.post(new Runnable() { @Override public void run() { if (col.getWidth() > 0) fitGreet(); } });
+            return;
+        }
+        float avail = col.getWidth() - col.getPaddingLeft() - col.getPaddingRight() - Ui.dp(this, 4);
+        float need = greet.getPaint().measureText(greet.getText().toString());
+        if (need > avail && avail > 0)
+            greet.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, Math.max(Ui.dp(this, 12), greet.getTextSize() * avail / need));
     }
 
     private void updateStatus() {

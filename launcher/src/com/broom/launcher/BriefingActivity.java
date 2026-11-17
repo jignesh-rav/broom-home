@@ -31,6 +31,7 @@ public class BriefingActivity extends Activity {
     private final java.util.LinkedHashMap<String, View> anchors = new java.util.LinkedHashMap<>();
     private final java.util.HashMap<String, TextView> tabPills = new java.util.HashMap<>();
     private String[] tabs = {};
+    private android.widget.HorizontalScrollView jumpScroll;   // tab pills scroll sideways instead of squeezing
     private int tabIdx;
     private long lastKey;
     private final Runnable rotate = new Runnable() {
@@ -49,6 +50,12 @@ public class BriefingActivity extends Activity {
         if (target != null) sv.scrollTo(0, Math.max(0, target.getTop() - Ui.dp(this, 8)));
         for (java.util.Map.Entry<String, TextView> e : tabPills.entrySet())
             e.getValue().setText((e.getKey().equals(tabs[i]) ? "▶  " : "") + e.getKey());
+        final TextView pill = tabPills.get(tabs[i]);
+        if (pill != null && jumpScroll != null) jumpScroll.post(new Runnable() { @Override public void run() {
+            int l = pill.getLeft(), r = pill.getRight(), x = jumpScroll.getScrollX(), w = jumpScroll.getWidth();
+            if (l < x) jumpScroll.smoothScrollTo(Math.max(0, l - Ui.dp(BriefingActivity.this, 10)), 0);
+            else if (r > x + w) jumpScroll.smoothScrollTo(r - w + Ui.dp(BriefingActivity.this, 10), 0);
+        } });
     }
     private final Runnable tick = new Runnable() {
         @Override public void run() {
@@ -168,15 +175,26 @@ public class BriefingActivity extends Activity {
         LinearLayout jumps = row();
         jumps.setPadding(0, Ui.dp(this, 10), 0, 0);
         jumps.setClipChildren(false);
-        col.addView(jumps);
+        jumpScroll = new android.widget.HorizontalScrollView(this);
+        jumpScroll.setHorizontalScrollBarEnabled(false);
+        jumpScroll.setFillViewport(false);
+        jumpScroll.setClipChildren(false);
+        jumpScroll.setClipToPadding(false);
+        jumpScroll.addView(jumps);
+        col.addView(jumpScroll, new LinearLayout.LayoutParams(-1, -2));
         java.util.List<String> names = new java.util.ArrayList<>();
         names.add("Summary");
         if (mk) java.util.Collections.addAll(names, "Indices", "India sectors", "India stocks", "US tech & AI");
         if (fb) names.add("Football");
         if (ck) names.add("Cricket");
-        java.util.List<Integer> secs = new java.util.ArrayList<>();
-        for (int k = 0; k < Briefing.SECTIONS.length; k++) if (Features.news(this, Briefing.SECTIONS[k])) secs.add(k);
+        java.util.List<Integer> secs = new java.util.ArrayList<>(), langSecs = new java.util.ArrayList<>();
+        for (int k = 0; k < Briefing.SECTIONS.length; k++)
+            if (Features.news(this, Briefing.SECTIONS[k])) (Briefing.isLang(Briefing.SECTIONS[k]) ? langSecs : secs).add(k);
         if (!secs.isEmpty()) names.add("News");
+        // one tab for all Indian-language news: "Regional", or the language's own name when only one is on
+        String langTab = langSecs.isEmpty() ? null
+                : langSecs.size() == 1 ? Lang.LABELS[Lang.index(Briefing.SECTIONS[langSecs.get(0)])].split(" ")[0] : "Regional";
+        if (langTab != null) names.add(langTab);
         final String[] jumpNames = names.toArray(new String[0]);
         tabs = jumpNames;
         if (tabIdx >= tabs.length) tabIdx = 0;
@@ -256,19 +274,22 @@ public class BriefingActivity extends Activity {
         }
         col.addView(sr);
 
-        // ---------- headlines: Cricket | Football, Tech | AI, Space | Market news
-        for (int i = 0; i < secs.size(); i += 2) {
+        // ---------- headlines: Cricket | Football, Tech | AI, Space | Market news, then Hindi | Gujarati, Marathi
+        for (int pass = 0; pass < 2; pass++) {
+        java.util.List<Integer> ss = pass == 0 ? secs : langSecs;
+        for (int i = 0; i < ss.size(); i += 2) {
             LinearLayout r = row();
             r.setPadding(0, Ui.dp(this, 14), 0, 0);
-            if (i == 0) anchors.put("News", r);
+            if (i == 0) anchors.put(pass == 0 ? "News" : langTab, r);
             for (int j = i; j < i + 2; j++) {
                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -2, 1);
                 if (j == i) lp.rightMargin = Ui.dp(this, 14);
-                if (j >= secs.size()) { r.addView(new View(this), lp); continue; }   // keep a lone card half width
-                int k = secs.get(j);
+                if (j >= ss.size()) { r.addView(new View(this), lp); continue; }   // keep a lone card half width
+                int k = ss.get(j);
                 r.addView(newsCard(Briefing.SECTION_TITLES[k], Briefing.stories(this, Briefing.SECTIONS[k]), 5), lp);
             }
             col.addView(r);
+        }
         }
 
         for (final String jn : jumpNames) {
@@ -278,13 +299,17 @@ public class BriefingActivity extends Activity {
             TextView p = Ui.pill(this, jn, th, new View.OnClickListener() {
                 @Override public void onClick(View v) { showTab(idx); }
             });
+            p.setSingleLine(true);
+            p.setPadding(Ui.dp(this, 12), p.getPaddingTop(), Ui.dp(this, 12), p.getPaddingBottom());   // nine tabs fit in one row
             tabPills.put(jn, p);
             p.setTag("jump:" + jn);
             LinearLayout.LayoutParams jl = new LinearLayout.LayoutParams(-2, -2);
-            jl.rightMargin = Ui.dp(this, 10);
+            jl.rightMargin = Ui.dp(this, 7);
             jumps.addView(p, jl);
         }
-        TextView src = Ui.text(this, "Sources: Yahoo Finance (quotes, delayed, display only), ESPNcricinfo, BBC, NASA, Ars Technica, TechCrunch, MIT Technology Review, Google News. Headlines only.",
+        TextView src = Ui.text(this, "Sources: Yahoo Finance (quotes, delayed, display only), ESPNcricinfo, BBC, NASA, Ars Technica, TechCrunch, MIT Technology Review, Google News"
+                + (langSecs.isEmpty() ? "" : "; BBC Hindi / Gujarati / Marathi, Dainik Bhaskar, Amar Ujala, Divya Bhaskar, ABP Asmita, ABP Majha, TV9 Marathi")
+                + ". Headlines only.",
                 11, th.dim, th.bodyFont);
         src.setPadding(0, Ui.dp(this, 14), 0, 0);
         col.addView(src);
@@ -365,6 +390,7 @@ public class BriefingActivity extends Activity {
         LinearLayout c = card();
         TextView h = Ui.text(this, title, 15, th.text, th.titleFont);
         h.setPadding(0, 0, 0, Ui.dp(this, 6));
+        h.setIncludeFontPadding(indic(title));
         c.addView(h);
         if (stories.isEmpty()) c.addView(Ui.text(this, "Loading headlines…", 12, th.dim, th.bodyFont));
         for (int i = 0; i < Math.min(n, stories.size()); i++) {
@@ -373,11 +399,18 @@ public class BriefingActivity extends Activity {
             t.setMaxLines(2);
             t.setEllipsize(android.text.TextUtils.TruncateAt.END);
             t.setPadding(0, Ui.dp(this, 6), 0, 0);
+            t.setIncludeFontPadding(indic(s.title));
             c.addView(t);
             String meta = s.source + (s.time > 0 ? "  ·  " + Briefing.ago(s.time) : "");
             c.addView(Ui.text(this, meta, 10, th.dim, th.bodyFont));
         }
         return c;
+    }
+
+    /** Contains Devanagari / Gujarati (or other Indic) letters? Those need font padding for vowel signs. */
+    static boolean indic(String s) {
+        for (int i = 0; s != null && i < s.length(); i++) { char ch = s.charAt(i); if (ch >= 0x0900 && ch <= 0x0DFF) return true; }
+        return false;
     }
 
     private View section(String s) {
@@ -455,6 +488,7 @@ public class BriefingActivity extends Activity {
             g.setPadding(0, Ui.dp(this, 8), 0, 0);
             top.addView(g);
             TextView t = Ui.text(this, st.get(0).title, 13, th.text, "Poppins-Regular");
+            t.setIncludeFontPadding(indic(st.get(0).title));
             t.setMaxLines(2);
             t.setEllipsize(android.text.TextUtils.TruncateAt.END);
             top.addView(t);

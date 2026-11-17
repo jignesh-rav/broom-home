@@ -180,6 +180,8 @@ final class Photos {
             }
             File f = new File(dir(c), it.file);
             if (!f.exists()) {
+                if (!mayDownload(c)) return null;
+                countDownload(c);
                 HttpURLConnection con = open(it.url);
                 File tmp = new File(dir(c), it.file + ".part");
                 try (InputStream in = con.getInputStream(); FileOutputStream out = new FileOutputStream(tmp)) {
@@ -193,6 +195,30 @@ final class Photos {
             f.setLastModified(System.currentTimeMillis());
             return BitmapFactory.decodeFile(f.getAbsolutePath(), o);
         } catch (Exception e) { return null; }
+    }
+
+    /** True if the photo is on USB or already downloaded (showing it costs no network). */
+    static boolean cached(Context c, Item it) {
+        return it.uri != null || (it.file != null && new File(dir(c), it.file).exists());
+    }
+
+    /** Polite download budget: at most DL_MAX new photos per 6 hours across all packs; then cached ones repeat. */
+    private static final int DL_MAX = 24;
+    private static final long DL_WINDOW = 6 * 3600000L;
+
+    static synchronized boolean mayDownload(Context c) {
+        android.content.SharedPreferences p = Theme.prefs(c);
+        long start = p.getLong("photo_dl_start", 0), now = System.currentTimeMillis();
+        if (now - start > DL_WINDOW || now < start) {
+            p.edit().putLong("photo_dl_start", now).putInt("photo_dl_n", 0).apply();
+            return true;
+        }
+        return p.getInt("photo_dl_n", 0) < DL_MAX;
+    }
+
+    private static synchronized void countDownload(Context c) {
+        android.content.SharedPreferences p = Theme.prefs(c);
+        p.edit().putInt("photo_dl_n", p.getInt("photo_dl_n", 0) + 1).apply();
     }
 
     /** Keep the image cache under the limit (oldest first). */

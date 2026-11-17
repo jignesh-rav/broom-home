@@ -17,13 +17,13 @@ import java.util.List;
 
 /**
  * Network monitor (runs in the always-on helper service):
- *  - every 2 min: reachability + latency probe (HTTP 204, ~0 bytes), Wi-Fi signal and link speed
- *  - every 3 h, only while the TV is idle: 5 MB download speed test (~40 MB/day); also on demand
+ *  - every 30 min: reachability + latency probe (HTTP 204, ~0 bytes), Wi-Fi signal and link speed
+ *  - every 1 h, only while the TV is idle: 5 MB download speed test (up to ~120 MB/day); also on demand
  * Keeps 24 h of samples on disk for the Network screen and the home status line.
  */
 final class NetMonitor {
-    static final long PROBE_MS = 2 * 60000L, SPEED_MS = 3 * 3600000L;
-    static final int KEEP = 24 * 30;   // 24 h of 2-minute samples
+    static final long PROBE_MS = 30 * 60000L, SPEED_MS = 3600000L;
+    static final int KEEP = 200;   // 24 h of 30-minute samples plus on-demand checks (older rows are dropped by age)
 
     static final class Sample { long t; boolean ok; int lat, rssi, link; }
     static final class Speed { long t; double mbps; }
@@ -47,7 +47,7 @@ final class NetMonitor {
                     probe(c);
                     long last = lastSpeedTime(c);
                     boolean idle = foreground == null || foreground.equals(c.getPackageName()) || foreground.contains("dream");
-                    if (idle && System.currentTimeMillis() - last > SPEED_MS) speedTest(c);
+                    if (idle && System.currentTimeMillis() - last > SPEED_MS - 2 * 60000L) speedTest(c);   // small tolerance: tests run on a probe tick
                 }
             }).start();
             h.postDelayed(this, PROBE_MS);

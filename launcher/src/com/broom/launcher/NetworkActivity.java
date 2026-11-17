@@ -70,7 +70,7 @@ public class NetworkActivity extends Activity {
         LinearLayout tl = new LinearLayout(this);
         tl.setOrientation(LinearLayout.VERTICAL);
         tl.addView(Ui.text(this, "Network", 30, th.text, "Poppins-SemiBold"));
-        tl.addView(Ui.text(this, "Checked every 2 minutes · speed test every 3 hours when the TV is idle", 12, th.dim, th.bodyFont));
+        tl.addView(Ui.text(this, "Checked every 30 minutes · speed test every hour when the TV is idle", 12, th.dim, th.bodyFont));
         head.addView(tl, new LinearLayout.LayoutParams(0, -2, 1));
         TextView run = Ui.pill(this, "Run speed test now", th, new View.OnClickListener() {
             @Override public void onClick(View v) {
@@ -151,7 +151,7 @@ public class NetworkActivity extends Activity {
         if (outs.isEmpty()) out.addView(Ui.text(this, "None — connection has been steady.", 13, 0xFF4CD964, th.bodyFont));
         for (int i = outs.size() - 1; i >= 0 && i >= outs.size() - 8; i--) {
             long[] o = outs.get(i);
-            out.addView(Ui.text(this, DateFormat.format("EEE h:mm a", o[0]) + "   ·   about " + Math.max(2, (o[1] - o[0]) / 60000 + 2) + " min",
+            out.addView(Ui.text(this, DateFormat.format("EEE h:mm a", o[0]) + "   ·   about " + Math.max(NetMonitor.PROBE_MS / 60000, (o[1] - o[0] + NetMonitor.PROBE_MS) / 60000) + " min",
                     13, th.text, "Poppins-Regular"));
         }
         LinearLayout.LayoutParams l1 = new LinearLayout.LayoutParams(0, -2, 1);

@@ -22,8 +22,11 @@ final class Features {
 
     static boolean on(Context c, String feature) { return Theme.prefs(c).getBoolean("f_" + feature, true); }
 
-    /** News section (cricket, football, tech, ai, space, markets) shown and fetched? */
-    static boolean news(Context c, String section) { return Theme.prefs(c).getBoolean("n_" + section, true); }
+    /** News section (cricket, football, tech, ai, space, markets; hi / gu / mr follow Settings → Language) shown and fetched? */
+    static boolean news(Context c, String section) {
+        if (Briefing.isLang(section)) return Lang.news(c, section);
+        return Theme.prefs(c).getBoolean("n_" + section, true);
+    }
 
     static boolean anyNews(Context c) {
         for (String s : Briefing.SECTIONS) if (news(c, s)) return true;

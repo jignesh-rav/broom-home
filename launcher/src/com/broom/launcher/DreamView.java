@@ -23,18 +23,24 @@ import java.util.Random;
  *    For burn-in safety the whole block shifts by a few pixels once every 10 minutes.
  */
 public class DreamView extends FrameLayout {
-    public static final String[] MODES = {"nebula", "aurora", "warp", "mandala", "clock", "quotes", "briefing", "panchang",
+    public static final String[] MODES = {"nebula", "aurora", "warp", "mandala", "clock", "quotes",
+            "desi", "sayings",
+            "briefing", "panchang",
             "photo:monuments", "photo:nature", "photo:animals", "photo:baby", "photo:space", "photo:usb", "shuffle"};
     public static final String[] MODE_NAMES = {"Nebula Drift", "Aurora", "Warp Speed", "Rangoli Mandala", "Minimal Clock",
-            "Facts & Quotes", "Briefing", "Panchang", "Monuments", "Nature", "Animals", "Baby animals", "Space", "My photos (USB)", "Shuffle"};
+            "Facts & Quotes",
+            "Desi Clock", "Sayings",
+            "Briefing", "Panchang", "Monuments", "Nature", "Animals", "Baby animals", "Space", "My photos (USB)", "Shuffle"};
     public static final String[] MODE_DESC = {
             "A colourful galaxy that drifts very slowly, with twinkling stars.",
             "Northern-lights curtains over a starry sky.",
             "Fly gently through a field of stars.",
             "A rangoli-inspired mandala turning slowly in place.",
             "Large clock, date and weather on deep black. Lowest power.",
-            "Interesting facts, quotes, and Hindi, Sanskrit & Gujarati sayings with meanings.",
-            "Markets, live cricket, football, tech and space headlines — a new page every 30 seconds.",
+            "Interesting facts, quotes, and Hindi, Sanskrit, Gujarati & Marathi sayings with meanings.",
+            "Time, date, weather and a saying in Gujarati, Hindi, Marathi or English, with native digits (Settings → Language).",
+            "Dohe, abhangs and kahevat in large type, with the poet and an English meaning — a new one every 3 minutes.",
+            "Markets, live cricket, football, tech and space headlines — a new page every 3 minutes.",
             "Today's Panchang: tithi, nakshatra, Choghadiya now, Rahu Kaal, sunrise/sunset and coming festivals.",
             "Forts, palaces, temples and landmarks — featured photos from Wikimedia Commons.",
             "Mountains, waterfalls, lakes and coasts (Wikimedia Commons).",
@@ -42,11 +48,12 @@ public class DreamView extends FrameLayout {
             "Cubs, calves, kittens, ducklings… (Wikimedia Commons).",
             "Nebulae, galaxies, the Moon and auroras (Wikimedia Commons).",
             "Photos from a USB drive plugged into the TV.",
-            "A new style every 10 minutes: animations, quotes and all photo packs, each shown once before any repeats."};
+            "A new style every 10 minutes: animations, quotes, Indian-language clock & sayings and all photo packs, each shown once before any repeats."};
     private static final int ANIMATED = 4; // first N modes are the animated ones
 
     /** Styles Shuffle rotates through: animations, quotes and every online photo pack. */
     private static final String[] SHUFFLE_POOL = {"nebula", "aurora", "warp", "mandala", "quotes",
+            "desi", "sayings",
             "photo:monuments", "photo:nature", "photo:animals", "photo:baby", "photo:space"};
 
     /**
@@ -85,9 +92,11 @@ public class DreamView extends FrameLayout {
     private volatile boolean running = true;
     private Thread loader;
     // quotes mode
-    private QuoteView quote;
+    private View quote;   // quotes or sayings layer
     // Briefing interleaved into every style: 3 min style, 3 min briefing tabs, repeat
     static final long BRIEF_EVERY = 3 * 60000L;
+    /** A photo stays 1 minute; info (briefing pages, quotes) changes every 3 minutes. */
+    static final long PHOTO_EVERY = 60000L, INFO_EVERY = 3 * 60000L;
     private FrameLayout briefBox;
     private View veil;
     private volatile boolean briefOn;
@@ -127,6 +136,10 @@ public class DreamView extends FrameLayout {
             quote = new QuoteView(c);
             addView(quote, new LayoutParams(-1, -1));
         }
+        if (active.equals("sayings")) {
+            quote = new DesiDream.SayingsView(c);
+            addView(quote, new LayoutParams(-1, -1));
+        }
         if (active.equals("briefing")) addView(new BriefView(c), new LayoutParams(-1, -1));
         else if (active.equals("panchang")) addView(new BriefView(c, 6), new LayoutParams(-1, -1));
         else if (briefEverywhere(c) && Features.anyBriefing(c) && !night(c) && !active.equals("panchang")) {
@@ -158,6 +171,11 @@ public class DreamView extends FrameLayout {
             if (briefOn) quote.setAlpha(0f);
             addView(quote, 1, new LayoutParams(-1, -1));
         }
+        if (next.equals("sayings")) {
+            quote = new DesiDream.SayingsView(getContext());
+            if (briefOn) quote.setAlpha(0f);
+            addView(quote, 1, new LayoutParams(-1, -1));
+        }
         if (next.startsWith("photo:")) startPhotos(getContext(), next.substring(6));
         txt.invalidate();
     }
@@ -175,13 +193,25 @@ public class DreamView extends FrameLayout {
                     try { Thread.sleep(60000); } catch (InterruptedException e) { return; }
                     if (live()) items = Photos.list(c, pack);
                 }
-                int i = 0;
+                int i = 0, fails = 0;
                 while (live() && !items.isEmpty()) {
-                    Photos.Item it = items.get(i % items.size());
+                    // next photo; once the download budget is spent, only photos already on disk are shown
+                    Photos.Item it = null;
+                    for (int k = 0; k < items.size(); k++) {
+                        Photos.Item cand = items.get((i + k) % items.size());
+                        if (Photos.cached(c, cand) || Photos.mayDownload(c)) { it = cand; i += k; break; }
+                    }
                     i++;
+                    if (it == null) { try { Thread.sleep(5 * 60000L); } catch (InterruptedException e) { return; } continue; }
                     int w = Math.max(1280, getWidth()), h = Math.max(720, getHeight());
                     Bitmap b = Photos.load(c, it, w, h);
-                    if (b == null) { if (i > items.size() * 2) break; continue; }
+                    if (b == null) {
+                        // back off instead of retrying at once (avoids hammering the photo server)
+                        fails++;
+                        try { Thread.sleep(Math.min(5 * 60000L, 15000L * fails)); } catch (InterruptedException e) { return; }
+                        continue;
+                    }
+                    fails = 0;
                     if (!live()) { b.recycle(); return; }
                     Bitmap old = prevPhoto;
                     prevPhoto = photo;
@@ -190,7 +220,7 @@ public class DreamView extends FrameLayout {
                     photoSince = System.currentTimeMillis();
                     post(new Runnable() { @Override public void run() { txt.invalidate(); } });
                     if (old != null) { try { Thread.sleep(2500); } catch (InterruptedException e) { return; } old.recycle(); }
-                    try { Thread.sleep(30000); } catch (InterruptedException e) { return; }
+                    try { Thread.sleep(PHOTO_EVERY); } catch (InterruptedException e) { return; }
                 }
                 if (photo == null) post(new Runnable() { @Override public void run() { txt.invalidate(); } });
             }
@@ -240,6 +270,7 @@ public class DreamView extends FrameLayout {
                 case "mandala": mandala(c, w, h, t); break;
                 case "clock": minimalBg(c, w, h); postInvalidateDelayed(60000); return; // static
                 case "quotes": case "briefing": case "panchang": wallpaper(c, w, h, t); break;
+                case "desi": case "sayings": postInvalidateDelayed(DesiDream.background(c, theme, active, w, h, t)); return;
                 default:
                     if (active.startsWith("photo:")) { if (!photos(c, w, h)) nebula(c, w, h, t); break; }
                     nebula(c, w, h, t); break;
@@ -444,7 +475,9 @@ public class DreamView extends FrameLayout {
             c.save();
             c.translate(nx, ny);
             boolean briefLayout = briefOn || active.equals("briefing") || active.equals("panchang");
-            if (active.startsWith("photo:") || active.equals("quotes") || briefLayout) {
+            if (!briefLayout && DesiDream.owns(active)) {
+                DesiDream.drawText(getContext(), c, theme, active, w, h, wx);   // Desi Clock / Sayings, in the screensaver language
+            } else if (active.startsWith("photo:") || active.equals("quotes") || briefLayout) {
                 // clock + weather bottom-right, caption bottom-left (photos) — all still
                 float x = w * 0.84f, y = h * (active.startsWith("photo:") && !briefLayout ? 0.82f : 0.2f);
                 BigClock.draw(getContext(), c, theme, x, y, h * 0.11f, 235);
@@ -559,7 +592,7 @@ public class DreamView extends FrameLayout {
                 animate().alpha(0f).setDuration(800).withEndAction(new Runnable() {
                     @Override public void run() { page = nextPage(page); invalidate(); animate().alpha(1f).setDuration(800).start(); }
                 }).start();
-                postDelayed(this, 30000);
+                postDelayed(this, INFO_EVERY);
             }
         };
         private final Runnable reload = new Runnable() {
@@ -594,7 +627,7 @@ public class DreamView extends FrameLayout {
             fixed = false;
             if (!pageOn(0)) page = nextPage(0);
             post(reload);
-            postDelayed(next, 30000);
+            postDelayed(next, INFO_EVERY);
         }
 
         /** Stays on one page (e.g. 6 = Panchang) and redraws every minute. */
@@ -628,6 +661,7 @@ public class DreamView extends FrameLayout {
             Context cx0 = getContext();
             if (page == 4) titles[4] = join(Features.news(cx0, "football") ? "FOOTBALL" : null, Features.news(cx0, "ai") ? "AI" : null);
             if (page == 5) titles[5] = join(Features.news(cx0, "space") ? "SPACE" : null, Features.news(cx0, "markets") ? "MARKET NEWS" : null);
+            if (page == 6) titles[6] = PanchangLang.pick(Lang.panchang(cx0), "PANCHANG", "पंचांग", "પંચાંગ", "पंचांग");
             text(c, titles[page], x, y, h * 0.03f, Ui.lighten(theme.accent | 0xFF000000, 0.45f), "Poppins-SemiBold");
             y += h * 0.07f;
             if (page == 1 || page == 2) {
@@ -681,29 +715,34 @@ public class DreamView extends FrameLayout {
                 long now = System.currentTimeMillis();
                 Vedic.Day vd = Vedic.today(getContext());
                 Panchang p = vd.p;
-                text(c, p.gujarati() + "   ·   " + Vedic.VAAR_GU[vd.weekday], x, y, h * 0.05f, 0xFFFFD166, "Poppins-SemiBold");
+                String lg = Lang.panchang(getContext());   // Panchang language (English keeps the old wording)
+                boolean en = Lang.EN.equals(lg);
+                text(c, PanchangLang.date(lg, p) + "   ·   " + (en ? Vedic.VAAR_GU[vd.weekday] : PanchangLang.vaar(lg, vd.weekday)), x, y, h * 0.05f, 0xFFFFD166, "Poppins-SemiBold");
                 y += h * 0.07f;
-                String tithi = (p.tithiIdx == 14 || p.tithiIdx == 29) ? p.tithiName() : (p.shukla() ? "Shukla " : "Krishna ") + p.tithiName();
-                text(c, tithi + "  ·  " + Panchang.NAKSHATRA[p.nakshatra] + "  ·  Vikram Samvat " + p.samvat, x, y, h * 0.032f, 0xFFFFFFFF, "Poppins-Regular");
+                text(c, (en ? PanchangLang.tithi(lg, p) : PanchangLang.paksha(lg, p))
+                        + "  ·  " + PanchangLang.nakshatra(lg, p.nakshatra) + "  ·  " + PanchangLang.pick(lg, "Vikram Samvat ", "विक्रम संवत ", "વિક્રમ સંવત ", "विक्रम संवत ")
+                        + PanchangLang.num(lg, p.samvat), x, y, h * 0.032f, 0xFFFFFFFF, "Poppins-Regular");
                 y += h * 0.09f;
                 Vedic.Slot cs = Vedic.current(vd, now);
                 if (cs != null) {
-                    text(c, "Choghadiya now", x, y, h * 0.024f, 0xAAFFFFFF, "Poppins-Light");
-                    text(c, cs.name + "   " + Vedic.hm(cs.from) + " – " + Vedic.hm(cs.to), x, y + h * 0.05f, h * 0.045f,
+                    text(c, PanchangLang.pick(lg, "Choghadiya now", "अभी का चौघड़िया", "હાલનું ચોઘડિયું", "आताचा चौघडिया"), x, y, h * 0.024f, 0xAAFFFFFF, "Poppins-Light");
+                    text(c, PanchangLang.chog(lg, cs.name) + "   " + PanchangLang.hm(lg, cs.from) + " – " + PanchangLang.hm(lg, cs.to), x, y + h * 0.05f, h * 0.045f,
                             cs.quality > 0 ? 0xFF4CD964 : cs.quality == 0 ? 0xFFFFD166 : 0xFFFF6B6B, "Poppins-SemiBold");
                     y += h * 0.12f;
                 }
-                text(c, "Rahu Kaal  " + Vedic.hm(vd.rahu.from) + " – " + Vedic.hm(vd.rahu.to) + "      Abhijit  " + Vedic.hm(vd.abhijit.from)
-                        + " – " + Vedic.hm(vd.abhijit.to), x, y, h * 0.03f, 0xEEFFFFFF, "Poppins-Regular");
+                text(c, PanchangLang.slot(lg, "Rahu Kaal") + "  " + PanchangLang.hm(lg, vd.rahu.from) + " – " + PanchangLang.hm(lg, vd.rahu.to) + "      "
+                        + (en ? "Abhijit" : PanchangLang.slot(lg, "Abhijit Muhurat")) + "  " + PanchangLang.hm(lg, vd.abhijit.from)
+                        + " – " + PanchangLang.hm(lg, vd.abhijit.to), x, y, h * 0.03f, 0xEEFFFFFF, "Poppins-Regular");
                 y += h * 0.06f;
-                text(c, "Sunrise " + Vedic.hm(vd.sunrise) + "   ·   Sunset " + Vedic.hm(vd.sunset), x, y, h * 0.03f, 0xCCFFFFFF, "Poppins-Light");
+                text(c, PanchangLang.pick(lg, "Sunrise ", "सूर्योदय ", "સૂર્યોદય ", "सूर्योदय ") + PanchangLang.hm(lg, vd.sunrise) + "   ·   "
+                        + PanchangLang.pick(lg, "Sunset ", "सूर्यास्त ", "સૂર્યાસ્ત ", "सूर्यास्त ") + PanchangLang.hm(lg, vd.sunset), x, y, h * 0.03f, 0xCCFFFFFF, "Poppins-Light");
                 y += h * 0.09f;
                 java.util.List<Vedic.Fest> fs = Vedic.upcoming(getContext(), 45);
                 if (!fs.isEmpty()) {
-                    text(c, "Coming up", x, y, h * 0.024f, 0xAAFFFFFF, "Poppins-Light");
+                    text(c, PanchangLang.pick(lg, "Coming up", "आने वाले त्योहार", "આવનારા તહેવારો", "आगामी सण"), x, y, h * 0.024f, 0xAAFFFFFF, "Poppins-Light");
                     for (int i = 0; i < Math.min(3, fs.size()); i++) {
                         y += h * 0.05f;
-                        text(c, android.text.format.DateFormat.format("EEE d MMM", fs.get(i).day) + "   " + fs.get(i).name, x, y, h * 0.032f, 0xFFFFFFFF, "Poppins-Regular");
+                        text(c, PanchangLang.greg(lg, "EEE d MMM", fs.get(i).day) + "   " + fs.get(i).name, x, y, h * 0.032f, 0xFFFFFFFF, "Poppins-Regular");
                     }
                 }
             } else {
@@ -737,7 +776,7 @@ public class DreamView extends FrameLayout {
 
     // =================================================================== quotes layer
 
-    /** One fact / quote at a time, centred; fades only when it changes (every 40 s). */
+    /** One fact / quote at a time, centred; fades only when it changes (every 3 min). */
     private final class QuoteView extends View {
         private final java.util.List<String[]> items = new java.util.ArrayList<>();
         private int idx;
@@ -747,7 +786,7 @@ public class DreamView extends FrameLayout {
                 animate().alpha(0f).setDuration(900).withEndAction(new Runnable() {
                     @Override public void run() { idx = (idx + 1) % Math.max(1, items.size()); invalidate(); animate().alpha(1f).setDuration(900).start(); }
                 }).start();
-                postDelayed(this, 40000);
+                postDelayed(this, INFO_EVERY);
             }
         };
 
@@ -759,11 +798,12 @@ public class DreamView extends FrameLayout {
                 org.json.JSONArray a = new org.json.JSONArray(new String(b, 0, n, "UTF-8"));
                 for (int i = 0; i < a.length(); i++) {
                     org.json.JSONObject o = a.getJSONObject(i);
-                    items.add(new String[]{o.getString("k"), o.getString("t"), o.optString("m", ""), o.optString("by", "")});
+                    if (DesiDream.inFacts(o.getString("k"), rnd))
+                        items.add(new String[]{o.getString("k"), o.getString("t"), o.optString("m", ""), o.optString("by", "")});
                 }
             } catch (Exception ignored) { }
             java.util.Collections.shuffle(items);
-            postDelayed(next, 40000);
+            postDelayed(next, INFO_EVERY);
         }
 
         @Override protected void onDetachedFromWindow() { super.onDetachedFromWindow(); removeCallbacks(next); }
@@ -774,7 +814,7 @@ public class DreamView extends FrameLayout {
             int w = getWidth(), h = getHeight();
             float maxW = w * 0.66f, x = w * 0.08f;
             String kind = q[0].equals("fact") ? "DID YOU KNOW?" : q[0].equals("quote") ? "QUOTE" : q[0].equals("hi") ? "हिंदी  ·  HINDI"
-                    : q[0].equals("gu") ? "ગુજરાતી  ·  GUJARATI" : "संस्कृत  ·  SANSKRIT";
+                    : q[0].equals("gu") ? "ગુજરાતી  ·  GUJARATI" : q[0].equals("mr") ? "मराठी  ·  MARATHI" : "संस्कृत  ·  SANSKRIT";
             tp.setTypeface(Ui.font(getContext(), "Poppins-Medium"));
             tp.setTextSize(h * 0.026f);
             tp.setColor(Ui.lighten(theme.accent | 0xFF000000, 0.45f));
