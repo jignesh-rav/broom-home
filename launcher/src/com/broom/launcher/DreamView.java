@@ -95,8 +95,8 @@ public class DreamView extends FrameLayout {
     private View quote;   // quotes or sayings layer
     // Briefing interleaved into every style: 2 min style, 2 min Briefing page (a different page each time), repeat
     static final long BRIEF_EVERY = 2 * 60000L;
-    /** A photo stays 1 minute; info (Briefing pages, quotes, sayings and their language) changes every 2 minutes. */
-    static final long PHOTO_EVERY = 60000L, INFO_EVERY = DesiDream.INFO_EVERY;
+    /** A photo stays 3 minutes; info (Briefing pages, quotes, sayings and their language) changes every 2 minutes. */
+    static final long PHOTO_EVERY = 3 * 60000L, INFO_EVERY = DesiDream.INFO_EVERY;
     private FrameLayout briefBox;
     private View veil;
     private volatile boolean briefOn;
@@ -193,20 +193,32 @@ public class DreamView extends FrameLayout {
                     try { Thread.sleep(60000); } catch (InterruptedException e) { return; }
                     if (live()) items = Photos.list(c, pack);
                 }
-                int i = 0, fails = 0;
-                while (live() && !items.isEmpty()) {
-                    // next photo; once the download budget is spent, only photos already on disk are shown
-                    Photos.Item it = null;
-                    for (int k = 0; k < items.size(); k++) {
-                        Photos.Item cand = items.get((i + k) % items.size());
-                        if (Photos.cached(c, cand) || Photos.mayDownload(c)) { it = cand; i += k; break; }
+                // Rotation: the photos already on the TV (instant), in shuffled order, with each newly fetched photo
+                // shown next. While a photo is up, the next new one downloads in the background (within the budget,
+                // only while this pack has fewer than Photos.TARGET fresh ones), so a change never waits on the network.
+                java.util.List<Photos.Item> pool = new java.util.ArrayList<>();
+                for (Photos.Item x : items) if (Photos.cached(c, x)) pool.add(x);
+                java.util.Collections.shuffle(pool);
+                java.util.List<Photos.Item> todo = new java.util.ArrayList<>();
+                for (Photos.Item x : items) if (!Photos.cached(c, x)) todo.add(x);
+                java.util.Collections.shuffle(todo);
+                int pi = 0, fails = 0;
+                Photos.Item ready = null, last = null;
+                while (live()) {
+                    Photos.Item it;
+                    if (ready != null) { it = ready; ready = null; }
+                    else if (!pool.isEmpty()) { it = pool.get(pi++ % pool.size()); if (it == last && pool.size() > 1) it = pool.get(pi++ % pool.size()); }
+                    else if (!todo.isEmpty() && Photos.fetch(c, todo.get(0))) { it = todo.remove(0); pool.add(it); }   // first run: nothing cached yet
+                    else {
+                        fails++;
+                        try { Thread.sleep(Math.min(5 * 60000L, 15000L * fails)); } catch (InterruptedException e) { return; }
+                        continue;
                     }
-                    i++;
-                    if (it == null) { try { Thread.sleep(5 * 60000L); } catch (InterruptedException e) { return; } continue; }
+                    if (!Photos.cached(c, it)) { pool.remove(it); continue; }   // replaced by a newer photo: never re-download it
                     int w = Math.max(1280, getWidth()), h = Math.max(720, getHeight());
                     Bitmap b = Photos.load(c, it, w, h);
                     if (b == null) {
-                        // back off instead of retrying at once (avoids hammering the photo server)
+                        pool.remove(it);   // the file went missing or is broken: drop it from this run
                         fails++;
                         try { Thread.sleep(Math.min(5 * 60000L, 15000L * fails)); } catch (InterruptedException e) { return; }
                         continue;
@@ -217,10 +229,22 @@ public class DreamView extends FrameLayout {
                     prevPhoto = photo;
                     photo = b;
                     photoItem = it;
+                    last = it;
                     photoSince = System.currentTimeMillis();
                     post(new Runnable() { @Override public void run() { txt.invalidate(); } });
+                    long until = photoSince + PHOTO_EVERY;
                     if (old != null) { try { Thread.sleep(2500); } catch (InterruptedException e) { return; } old.recycle(); }
-                    try { Thread.sleep(PHOTO_EVERY); } catch (InterruptedException e) { return; }
+                    // fetch the next new photo now, while this one is on screen
+                    if (!todo.isEmpty() && Photos.mayDownload(c)) {
+                        int fresh = 0;
+                        for (Photos.Item x : pool) if (Photos.fresh(c, x)) fresh++;
+                        if (fresh < Photos.TARGET) {
+                            Photos.Item cand = todo.remove(0);
+                            if (Photos.fetch(c, cand)) { ready = cand; pool.add(cand); }
+                        }
+                    }
+                    long wait = until - System.currentTimeMillis();
+                    if (wait > 0) try { Thread.sleep(wait); } catch (InterruptedException e) { return; }
                 }
                 if (photo == null) post(new Runnable() { @Override public void run() { txt.invalidate(); } });
             }

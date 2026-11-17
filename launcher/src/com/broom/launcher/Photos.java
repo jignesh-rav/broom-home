@@ -25,11 +25,18 @@ import java.util.Locale;
 
 /**
  * Photo screensaver source. Wikimedia Commons featured pictures (free licences, credit shown),
- * or the user's own photos on USB. Lists are cached for a week; images are downloaded one at a time
- * into a cache capped at 50 MB. Everything here runs on background threads.
+ * or the user's own photos on USB. Lists are cached for a week. Images are downloaded one at a time, ahead of
+ * time, into a cache capped at 50 MB: the screensaver shows photos already on the TV and fetches the next new one
+ * while the current one is up. A photo is kept 48 hours after its download; after that, each new download
+ * replaces one old photo, so the set refreshes gradually and never empties offline.
+ * Everything here runs on background threads.
  */
 final class Photos {
     static final long CACHE_LIMIT = 50L * 1024 * 1024;
+    /** A downloaded photo counts as fresh for 48 hours (file time = download time). */
+    static final long KEEP_MS = 48 * 3600000L;
+    /** Fetch new photos for a pack only while it has fewer fresh ones than this. */
+    static final int TARGET = 40;
     static final String[] PACKS = {"monuments", "nature", "animals", "baby", "space", "usb"};
 
     /** Title searches inside Commons' featured pictures, per pack. */
@@ -179,22 +186,37 @@ final class Photos {
                 try (InputStream in = c.getContentResolver().openInputStream(it.uri)) { return BitmapFactory.decodeStream(in, null, o); }
             }
             File f = new File(dir(c), it.file);
-            if (!f.exists()) {
-                if (!mayDownload(c)) return null;
-                countDownload(c);
-                HttpURLConnection con = open(it.url);
-                File tmp = new File(dir(c), it.file + ".part");
-                try (InputStream in = con.getInputStream(); FileOutputStream out = new FileOutputStream(tmp)) {
-                    byte[] buf = new byte[16384];
-                    int n;
-                    while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
-                } finally { con.disconnect(); }
-                tmp.renameTo(f);
-                trim(c);
-            }
-            f.setLastModified(System.currentTimeMillis());
+            if (!f.exists() && !fetch(c, it)) return null;
             return BitmapFactory.decodeFile(f.getAbsolutePath(), o);
         } catch (Exception e) { return null; }
+    }
+
+    /** Downloads one photo into the cache (within the download budget). The file's time stays the download time. */
+    static boolean fetch(Context c, Item it) {
+        if (it.uri != null || it.file == null) return it.uri != null;
+        File f = new File(dir(c), it.file);
+        if (f.exists()) return true;
+        if (!mayDownload(c)) return false;
+        countDownload(c);
+        File tmp = new File(dir(c), it.file + ".part");
+        try {
+            HttpURLConnection con = open(it.url);
+            try (InputStream in = con.getInputStream(); FileOutputStream out = new FileOutputStream(tmp)) {
+                byte[] buf = new byte[16384];
+                int n;
+                while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+            } finally { con.disconnect(); }
+            if (!tmp.renameTo(f)) return false;
+            trim(c);
+            return true;
+        } catch (Exception e) { tmp.delete(); return false; }
+    }
+
+    /** Downloaded in the last 48 hours (USB photos always count). */
+    static boolean fresh(Context c, Item it) {
+        if (it.uri != null) return true;
+        File f = it.file == null ? null : new File(dir(c), it.file);
+        return f != null && f.exists() && System.currentTimeMillis() - f.lastModified() < KEEP_MS;
     }
 
     /** True if the photo is on USB or already downloaded (showing it costs no network). */
@@ -221,19 +243,22 @@ final class Photos {
         p.edit().putInt("photo_dl_n", p.getInt("photo_dl_n", 0) + 1).apply();
     }
 
-    /** Keep the image cache under the limit (oldest first). */
+    /**
+     * After a new download: drop the single oldest photo past 48 hours (one out for one in, so the set refreshes
+     * gradually), then keep the cache under its size limit, oldest download first.
+     */
     private static void trim(Context c) {
         File[] fs = dir(c).listFiles();
         if (fs == null) return;
-        long total = 0;
-        for (File f : fs) if (f.getName().endsWith(".jpg")) total += f.length();
-        if (total <= CACHE_LIMIT) return;
         List<File> imgs = new ArrayList<>();
         for (File f : fs) if (f.getName().endsWith(".jpg")) imgs.add(f);
         Collections.sort(imgs, new java.util.Comparator<File>() {
             @Override public int compare(File a, File b) { return Long.compare(a.lastModified(), b.lastModified()); }
         });
-        for (File f : imgs) { if (total <= CACHE_LIMIT * 0.8) break; total -= f.length(); f.delete(); }
+        if (!imgs.isEmpty() && System.currentTimeMillis() - imgs.get(0).lastModified() > KEEP_MS) imgs.remove(0).delete();
+        long total = 0;
+        for (File f : imgs) total += f.length();
+        if (total > CACHE_LIMIT) for (File f : imgs) { if (total <= CACHE_LIMIT * 0.8) break; total -= f.length(); f.delete(); }
     }
 
     private static List<Item> usb(Context c) {

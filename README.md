@@ -33,7 +33,7 @@ Nothing here needs root or an account. Every change can be undone.
 
 A full tour with the remote is in **[docs/FEATURES.md](docs/FEATURES.md)**.
 
-**Screensavers:** Nebula Drift, Aurora, Warp Speed, Rangoli Mandala, Minimal Clock, Facts & Quotes, Briefing, Panchang, Desi Clock and Sayings (time, date, weather and dohe / abhangs / kahevat, rotating through English, Hindi, Gujarati and Marathi, or the ones you pick), photo packs (Monuments, Nature, Animals, Baby animals, Space, from Wikimedia featured pictures) and your own photos from a USB stick. Photos change every minute, and info and the screensaver language every 2 minutes; new photo downloads are capped at 24 every 6 hours
+**Screensavers:** Nebula Drift, Aurora, Warp Speed, Rangoli Mandala, Minimal Clock, Facts & Quotes, Briefing, Panchang, Desi Clock and Sayings (time, date, weather and dohe / abhangs / kahevat, rotating through English, Hindi, Gujarati and Marathi, or the ones you pick), photo packs (Monuments, Nature, Animals, Baby animals, Space, from Wikimedia featured pictures) and your own photos from a USB stick. Photos change every 3 minutes, and info and the screensaver language every 2 minutes. Photos show from the TV's own cache first, the next new one downloads while the current one is up, and each is kept 48 hours before being swapped for a fresh one (at most 24 new downloads every 6 hours)
 
 **Extras**
 - Pop-ups over any app or HDMI input: live scores (a wicket, every 50 runs, goals), market alerts, and updates every 10 min, each on screen for 90 s (market pulse, live score, weather heads-ups, top headline, Panchang, break reminder)
