@@ -6,6 +6,8 @@ Many smart TVs, especially budget ones from 2018–2022, fill their home screen 
 
 Nothing here needs root or an account. Every change can be undone.
 
+**Smooth on budget TVs:** moving around the home screen runs at a steady 60 fps on both test TVs: 3× faster than before on a 1 GB Mi TV and 4× faster on a 1080p TCL, with 99% of frames on time. How it's done, the before / after numbers and how to measure any TV app are in **[docs/PERFORMANCE.md](docs/PERFORMANCE.md)**.
+
 **Works on:** TVs and boxes running **Android TV** (Xiaomi, Sony, TCL, OnePlus, Philips, Nokia, Vu, Nvidia Shield, Mi Box…) or **Google TV** (Chromecast with Google TV and Google TV sets). **Not for:** Samsung (Tizen), LG (webOS), Roku or Fire TV. Tested so far on a Xiaomi Mi TV 4A/4C Pro and a TCL 4K Android TV (both Android TV 9); other devices are expected to work but are untested. The full list, with Google TV notes and the few Xiaomi-only extras, is in **[docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)**.
 
 ![Broom Home: clock, weather, market ticker, favourite apps, the icon rail on the left and the Settings gear](docs/screenshots/01-home.jpg)
