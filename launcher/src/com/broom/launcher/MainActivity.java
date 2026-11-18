@@ -230,6 +230,28 @@ public class MainActivity extends Activity {
         if (target != null) target.post(new Runnable() { @Override public void run() { target.requestFocus(); } });
         updateClock();
         updateStatus();
+        cacheStatic();
+    }
+
+    /**
+     * Header, ticker, weather card and row titles don't change while focus moves, but their shadowed text is the
+     * most expensive thing to draw. Each gets its own cached layer, painted once and reused on every frame.
+     */
+    private void cacheStatic() {
+        for (int i = 0; i < content.getChildCount(); i++) {
+            View ch = content.getChildAt(i);
+            if (!hasTile(ch)) ch.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        }
+        if (rail != null) rail.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+    }
+
+    private boolean hasTile(View v) {
+        if (focusTiles.containsKey(v)) return true;
+        if (v instanceof android.view.ViewGroup) {
+            android.view.ViewGroup g = (android.view.ViewGroup) v;
+            for (int i = 0; i < g.getChildCount(); i++) if (hasTile(g.getChildAt(i))) return true;
+        }
+        return false;
     }
 
     private View header() {
@@ -438,6 +460,10 @@ public class MainActivity extends Activity {
         Ui.glassOutline(t, Ui.dp(this, theme.radiusDp), glass.edge);
         t.setClipToOutline(true);
         t.setAlpha(0.86f);
+        // Each tile keeps its own cached picture (a hardware layer). Dimmed (86%) tiles with overlapping parts would
+        // otherwise be painted into a fresh off-screen buffer on every frame; with the layer, a focus move only
+        // re-blends ready-made images, and a tile is re-painted only when its own look changes (focus ring).
+        t.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         t.setFocusable(true);
         t.setClickable(true);
         t.setSoundEffectsEnabled(false);
