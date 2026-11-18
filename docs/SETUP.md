@@ -34,6 +34,7 @@ From the repo's `scripts` folder:
 | Install without debloat | add `-NoDebloat` | add `--no-debloat` |
 | Debloat without questions (safe + optional) | add `-Debloat` | add `--debloat` |
 | + ad-blocking DNS | add `-AdBlockDns` | add `--adblock-dns` |
+| Keep the TV's own animation and key-repeat settings | add `-NoSpeedTweaks` | add `--no-speed-tweaks` |
 | Use a downloaded APK | add `-Apk ..\BroomHome.apk` | prefix `APK=../BroomHome.apk` |
 | Undo all | `.\undo.ps1 -Tv 192.168.1.50` | `./undo.sh 192.168.1.50` |
 

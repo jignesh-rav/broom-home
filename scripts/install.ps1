@@ -9,6 +9,7 @@
 #   .\install.ps1 -Tv 192.168.1.50 -NoDebloat         # install only, leave every other app as it is
 #   .\install.ps1 -Tv 192.168.1.50 -Debloat           # no questions: switch off the safe AND the optional packages
 #   .\install.ps1 -Tv 192.168.1.50 -AdBlockDns        # also turn on AdGuard private DNS (blocks ads system-wide)
+#   .\install.ps1 -Tv 192.168.1.50 -NoSpeedTweaks     # keep the TV's own animation and key-repeat settings
 #   .\install.ps1 -Tv 192.168.1.50 -Apk path\to\BroomHome.apk
 #
 # Without a console to answer questions (e.g. run by a script), only the safe packages are switched off.
@@ -18,7 +19,8 @@ param(
     [switch]$Debloat,
     [switch]$NoDebloat,
     [switch]$DebloatPreview,
-    [switch]$AdBlockDns
+    [switch]$AdBlockDns,
+    [switch]$NoSpeedTweaks
 )
 $ErrorActionPreference = "Continue"
 if ($Tv -notmatch ":") { $Tv = "${Tv}:5555" }
@@ -152,6 +154,15 @@ if ((Sh "pm list packages") -match "package:com.google.android.apps.tv.launcherx
     Sh "pm disable-user --user 0 com.google.android.apps.tv.launcherx" | Out-Null
 }
 Sh "cmd package set-home-activity --user 0 $pkg/.MainActivity" | Out-Null
+
+# snappier navigation (see docs/PERFORMANCE.md). Broom compiled ahead of time; window animations off,
+# app animations at half length, held keys repeat after 300 ms. The TV's own values are saved once; undo restores them.
+Write-Host "Making navigation snappier..."
+Sh "cmd package compile -m speed -f $pkg" | Out-Null
+if (-not $NoSpeedTweaks) {
+    Sh '[ -f /data/local/tmp/broom-speed-before.txt ] || echo "$(settings get global window_animation_scale) $(settings get global transition_animation_scale) $(settings get global animator_duration_scale) $(settings get secure long_press_timeout)" > /data/local/tmp/broom-speed-before.txt' | Out-Null
+    Sh "settings put global window_animation_scale 0; settings put global transition_animation_scale 0; settings put global animator_duration_scale 0.5; settings put secure long_press_timeout 300" | Out-Null
+}
 
 # ---------- Step 2: debloat
 Write-Host ""; Write-Host "== Step 2 of 2: debloat (switch off what slows the TV down)" -ForegroundColor Cyan

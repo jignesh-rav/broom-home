@@ -1,6 +1,7 @@
 #!/bin/bash
 # undo.sh - put the TV back: turn on everything in debloat-list.txt and every debloat-<brand>.txt,
-# restore the stock launcher and screensaver, switch off the DNS ad-blocker and remove Broom.
+# restore the stock launcher and screensaver, the TV's own animation and key-repeat settings,
+# switch off the DNS ad-blocker and remove Broom.
 #   ./undo.sh 192.168.1.50              full undo
 #   ./undo.sh 192.168.1.50 --keep-broom turn the debloated packages back on only
 TV="${1:?usage: ./undo.sh <tv-ip> [--keep-broom]}"
@@ -17,6 +18,17 @@ for f in "$HERE"/debloat-*.txt; do
     sh_ "pm enable $p" >/dev/null
   done
 done
+# the animation and key-repeat values the installer saved before changing them
+restore() { if [ -z "$3" ] || [ "$3" = null ]; then sh_ "settings delete $1 $2" >/dev/null; else sh_ "settings put $1 $2 $3"; fi; }
+B="$(sh_ "cat /data/local/tmp/broom-speed-before.txt" | tr -d '\r')"
+if [ -n "$B" ]; then
+  read -r W T A L <<EOF
+$B
+EOF
+  restore global window_animation_scale "$W"; restore global transition_animation_scale "$T"
+  restore global animator_duration_scale "$A"; restore secure long_press_timeout "$L"
+  sh_ "rm /data/local/tmp/broom-speed-before.txt"
+fi
 sh_ "settings delete global private_dns_mode"
 sh_ "settings delete global private_dns_specifier"
 if [ "${2:-}" != "--keep-broom" ]; then

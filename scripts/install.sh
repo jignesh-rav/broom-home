@@ -10,15 +10,16 @@
 #   ./install.sh 192.168.1.50 --no-debloat          install only, leave every other app as it is
 #   ./install.sh 192.168.1.50 --debloat             no questions: switch off the safe AND the optional packages
 #   ./install.sh 192.168.1.50 --adblock-dns         also turn on AdGuard private DNS
+#   ./install.sh 192.168.1.50 --no-speed-tweaks     keep the TV's own animation and key-repeat settings
 #   APK=path/to/BroomHome.apk ./install.sh 192.168.1.50
 #
 # Without a terminal to answer questions (e.g. run by a script), only the safe packages are switched off.
 set -u
-TV="${1:?usage: ./install.sh <tv-ip> [--debloat-preview | --no-debloat | --debloat] [--adblock-dns]}"; shift
+TV="${1:?usage: ./install.sh <tv-ip> [--debloat-preview | --no-debloat | --debloat] [--adblock-dns] [--no-speed-tweaks]}"; shift
 case "$TV" in *:*) ;; *) TV="$TV:5555";; esac
-DEBLOAT=ask; DNS=0
+DEBLOAT=ask; DNS=0; SPEED=1
 for a in "$@"; do case "$a" in
-  --debloat) DEBLOAT=all;; --no-debloat) DEBLOAT=none;; --debloat-preview) DEBLOAT=preview;; --adblock-dns) DNS=1;;
+  --debloat) DEBLOAT=all;; --no-debloat) DEBLOAT=none;; --debloat-preview) DEBLOAT=preview;; --adblock-dns) DNS=1;; --no-speed-tweaks) SPEED=0;;
   *) echo "Unknown option: $a"; exit 1;;
 esac; done
 INTERACTIVE=0; [ -t 0 ] && [ -t 1 ] && INTERACTIVE=1
@@ -133,6 +134,15 @@ if sh_ "pm list packages" | grep -q "package:com.google.android.apps.tv.launcher
   sh_ "pm disable-user --user 0 com.google.android.apps.tv.launcherx" >/dev/null
 fi
 sh_ "cmd package set-home-activity --user 0 $PKG/.MainActivity"
+
+# ---------- snappier navigation (see docs/PERFORMANCE.md). Broom compiled ahead of time; window animations off,
+# app animations at half length, held keys repeat after 300 ms. The TV's own values are saved once; undo restores them.
+echo "Making navigation snappier..."
+sh_ "cmd package compile -m speed -f $PKG" >/dev/null
+if [ $SPEED = 1 ]; then
+  sh_ "[ -f /data/local/tmp/broom-speed-before.txt ] || echo \"\$(settings get global window_animation_scale) \$(settings get global transition_animation_scale) \$(settings get global animator_duration_scale) \$(settings get secure long_press_timeout)\" > /data/local/tmp/broom-speed-before.txt"
+  sh_ "settings put global window_animation_scale 0; settings put global transition_animation_scale 0; settings put global animator_duration_scale 0.5; settings put secure long_press_timeout 300"
+fi
 
 # ---------- Step 2: debloat
 echo; echo "== Step 2 of 2: debloat (switch off what slows the TV down)"

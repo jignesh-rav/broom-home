@@ -41,6 +41,18 @@ The principles, in order of impact:
 
 **Targets that feel smooth on a TV:** 90th percentile under 16.7 ms, 99th percentile under 33 ms, and fewer than 5% of frames over budget during navigation.
 
+## System-level speed-ups (installer default)
+
+On top of Broom's own drawing, the installer tunes three TV settings. It saves the TV's own values first, and `undo` puts them back. Skip them with `-NoSpeedTweaks` / `--no-speed-tweaks`. Broom Console shows each TV's state and offers **Make navigation snappier** for TVs that don't have them yet.
+
+| Setting | What it does | Measured effect |
+|---|---|---|
+| **Broom compiled ahead of time** | Android normally compiles only the parts of an app it has seen being used; the rest runs slower until it is compiled in the background. Broom is now compiled fully right after install. | Opening the Briefing: Mi TV 1080 → 914 ms (15% faster), TCL 824 → 788 ms (4% faster). Weather: Mi TV 368 → 329 ms (11%), TCL 335 → 323 ms (4%). Light screens (Themes) unchanged. Medians of 4 opens each. |
+| **Window and screen-change animations off** | Apps and screens open straight away instead of sliding or fading in. Broom's own focus animations stay, at half length, so moving around still feels fluid. | Removes the ~150 ms transition the TCL played on every screen change (the Mi TV already had them off). |
+| **Held keys repeat after 300 ms** (was 400 ms) | Holding an arrow key starts scrolling 100 ms sooner. Long presses (for example the app menu on a tile) also register at 300 ms. | 25% shorter wait before a held key repeats. Apps pick it up at once; the TV's own key-repeat may only follow after its next full restart. |
+
+Compiling ahead of time is redone automatically by the installer and the Console after every Broom update, because Android resets it when an app is updated.
+
 ## How to measure any Android TV app
 
 You need ADB (see the README, Step 1) and the app's package name.

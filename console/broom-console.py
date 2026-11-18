@@ -252,8 +252,11 @@ def tv_status(tv):
                          "echo @v; dumpsys package %s | grep -m1 versionName; echo @m; getprop ro.product.manufacturer; "
                          "getprop ro.product.model; echo @a; settings get secure enabled_accessibility_services; "
                          "echo @d; df /data | tail -1; echo @x; dumpsys activity services %s | grep -c KeyRemapService; "
-                         "echo @dns; settings get global private_dns_mode; settings get global private_dns_specifier; echo @end"
-                 % (PKG, PKG))
+                         "echo @dns; settings get global private_dns_mode; settings get global private_dns_specifier; "
+                         "echo @sp; settings get global window_animation_scale; settings get global transition_animation_scale; "
+                         "settings get global animator_duration_scale; settings get secure long_press_timeout; "
+                         "dumpsys package %s | grep -A3 'Dexopt state' | grep -m1 -o 'status=[a-z-]*'; echo @end"
+                 % (PKG, PKG, PKG))
         s = {"ok": True}
         w = re.search(r"mWakefulness=(\w+)", section(out, "w"))
         s["power"] = w.group(1) if w else "?"
@@ -271,6 +274,10 @@ def tv_status(tv):
             s["storage_free_mb"] = int(d[3]) // 1024
         dl = section(out, "dns").split("\n")
         s["dns_mode"], s["dns_host"] = (dl + ["", ""])[0].strip(), (dl + ["", ""])[1].strip()
+        sp = [x.strip() for x in section(out, "sp").split("\n")] + [""] * 5
+        s["speed"] = {"window": sp[0], "transition": sp[1], "animator": sp[2], "long_press": sp[3],
+                      "compiled": sp[4].replace("status=", "")}
+        s["speed"]["tweaked"] = (sp[0] in ("0", "0.0") and sp[1] in ("0", "0.0") and sp[3] == "300")
         if s["version"] and vtuple(s["version"]) >= NEEDS_STATUS:
             js = sh(serial, "am broadcast -a com.broom.launcher.STATUS -n %s >/dev/null 2>&1; cat %s/broom-status.json" % (RECV, EXT))
             try:
@@ -403,6 +410,7 @@ def do_action(tv, body):
                 m = re.search(r"Failure \[[^\]]+\]", text)
                 raise Fail("Install failed: " + (m.group(0) if m else text.strip()[-200:]))
             time.sleep(6)
+            sh(serial, "cmd package compile -m speed -f %s" % PKG, timeout=120)   # ahead-of-time compile: snappier screens
             v2 = tv_version(serial)
             running = sh(serial, "dumpsys activity services %s | grep -c KeyRemapService" % PKG).strip() not in ("", "0")
             return {"msg": "Installed %s: Broom %s. Button helper %s." % (label, v2, "running" if running else
@@ -431,6 +439,11 @@ def do_action(tv, body):
         if action == "dns_off":
             sh(serial, "settings delete global private_dns_mode; settings delete global private_dns_specifier")
             return {"msg": "Private DNS is off: the TV uses the router's DNS again."}
+        if action == "speed":
+            sh(serial, "[ -f /data/local/tmp/broom-speed-before.txt ] || echo \"$(settings get global window_animation_scale) $(settings get global transition_animation_scale) $(settings get global animator_duration_scale) $(settings get secure long_press_timeout)\" > /data/local/tmp/broom-speed-before.txt; settings put global window_animation_scale 0; settings put global transition_animation_scale 0; settings put global animator_duration_scale 0.5; settings put secure long_press_timeout 300")
+            sh(serial, "cmd package compile -m speed -f %s" % PKG, timeout=120)
+            return {"msg": "Snappier navigation on: window animations off, Broom's animations at half length, held keys repeat "
+                           "after 300 ms, Broom compiled ahead of time. The TV's own values are saved; undo puts them back."}
         if action == "restart":
             adb(["reboot"], serial, timeout=15)
             return {"msg": "Restarting. It takes about a minute. On a Xiaomi, ADB can come back switched off afterwards."}

@@ -171,6 +171,7 @@ Then take the tour in **[docs/FEATURES.md](docs/FEATURES.md)**.
 | `-NoDebloat` | `--no-debloat` | Skip Step 2: install Broom only and leave every other app as it is |
 | `-Debloat` | `--debloat` | Step 2 without questions: switch off the safe **and** the optional packages. Delete lines from the lists first to keep something |
 | `-AdBlockDns` | `--adblock-dns` | AdGuard private DNS: blocks ads and trackers for the whole TV. If AdGuard is down, Broom switches to Cloudflare until it's back |
+| `-NoSpeedTweaks` | `--no-speed-tweaks` | Keep the TV's own animation and key-repeat settings. By default the installer switches window animations off and makes held keys repeat sooner (saved first, `undo` restores them); see [docs/PERFORMANCE.md](docs/PERFORMANCE.md#system-level-speed-ups-installer-default) |
 | `-Apk path\to.apk` | `APK=path/to.apk ./install.sh …` | Use an APK you already have instead of downloading |
 
 **After a TV system update**, run the same command again. It's safe to repeat and only fixes what's missing.

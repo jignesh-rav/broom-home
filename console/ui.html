@@ -300,6 +300,11 @@ function renderCard(id) {
     const n = b.net, up = (n.up * 100 / n.checks).toFixed(n.up === n.checks ? 0 : 1);
     add("Network, 24 h", up + "% up · " + n.avg_ms + " ms avg" + (n.speed_mbps ? " · last speed test " + n.speed_mbps.toFixed(1) + " Mbps" : ""));
   }
+  if (d.speed) {
+    const sp = d.speed;
+    add("Speed", (sp.compiled === "speed" ? "Broom compiled ahead of time" : "Broom not fully compiled (" + (sp.compiled || "?") + ")")
+      + " · " + (sp.tweaked ? "animations off, key repeat 300 ms" : "TV's own animations (" + sp.window + "), key repeat " + sp.long_press + " ms"));
+  }
   add("Button helper", d.helper_enabled ? (d.helper_running ? "On" : "Enabled, not running yet") : "Off (pop-ups and the sleep timer won't work)");
   if (b.still_watching) add("Still watching?", b.still_watching.on ? "After " + b.still_watching.hours + " h idle" : "Off");
   if (b.crash_n) add("Crashes", b.crash_n + " recently (" + ago(b.crash_at) + ")");
@@ -314,6 +319,7 @@ function renderCard(id) {
   if (d.has_status) acts.append(btn("Redraw home", () => act(t, { action: "reload" })));
   acts.append(d.dns_mode === "hostname" ? btn("DNS: use router's", () => confirmAct(t, "Switch " + t.name + " back to the router's DNS? Ads are no longer blocked.", { action: "dns_off" }))
     : btn("DNS: AdGuard", () => act(t, { action: "dns_adguard" })));
+  if (d.speed && (!d.speed.tweaked || d.speed.compiled !== "speed")) acts.append(btn("Make navigation snappier", () => act(t, { action: "speed" })));
   acts.append(btn("Back up settings", () => act(t, { action: "backup" })));
   acts.append(btn("Restart…", () => confirmAct(t, "Restart " + t.name + "? Whoever is watching is interrupted, and on a Xiaomi ADB can come back switched off.", { action: "restart" }), "danger"));
   kids.push(acts, res);

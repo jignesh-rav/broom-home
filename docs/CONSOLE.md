@@ -16,6 +16,7 @@ On Windows you can also double-click `console\broom-console.cmd`. The page opens
 - **Connection:** on, screensaver or standby. If ADB can't reach the TV, the card says why in plain words (ADB switched off, the TV asking you to allow this computer, the TV off the network) and what to do.
 - **Broom:** version, with an **Update** button when a newer release is out (**Update all TVs** does every TV at once). The release APK is checked against its SHA-256 before it's installed.
 - **Health:** memory, storage, uptime, the DNS in use (AdGuard, the Cloudflare backup, or the router's), and 24 h network uptime, latency and the last speed test.
+- **Speed:** whether Broom is compiled ahead of time and whether the snappier animation and key-repeat settings are on, with a **Make navigation snappier** button when they aren't (see [PERFORMANCE.md](PERFORMANCE.md#system-level-speed-ups-installer-default)). **Update** compiles Broom again after installing.
 - **Buttons:** Screenshot (shown in the page and saved), Test pop-ups, Redraw home, switch the DNS between AdGuard and the router's, Back up settings, and Restart (asks first).
 
 **Settings:** both TVs side by side.

@@ -1,5 +1,6 @@
 # undo.ps1 - put the TV back the way it was: turn on every package in debloat-list.txt and every
-# debloat-<brand>.txt, bring back the stock launcher and screensaver, switch off the DNS ad-blocker and remove Broom.
+# debloat-<brand>.txt, bring back the stock launcher and screensaver and the TV's own animation and key-repeat
+# settings, switch off the DNS ad-blocker and remove Broom.
 #
 #   .\undo.ps1 -Tv 192.168.1.50              # full undo
 #   .\undo.ps1 -Tv 192.168.1.50 -KeepBroom   # turn the debloated packages back on only, keep Broom installed
@@ -18,6 +19,16 @@ foreach ($f in Get-ChildItem "$PSScriptRoot\debloat-*.txt") {
         Sh "cmd package install-existing $p" | Out-Null   # brings back a package removed for the user ("remove-for-user")
         Sh "pm enable $p" | Out-Null
     }
+}
+# the animation and key-repeat values the installer saved before changing them
+$before = Sh "cat /data/local/tmp/broom-speed-before.txt"
+if ($before -and $before -notmatch 'No such file') {
+    $v = $before -split '\s+'
+    $keys = @('global window_animation_scale', 'global transition_animation_scale', 'global animator_duration_scale', 'secure long_press_timeout')
+    for ($i = 0; $i -lt 4; $i++) {
+        if (-not $v[$i] -or $v[$i] -eq 'null') { Sh "settings delete $($keys[$i])" | Out-Null } else { Sh "settings put $($keys[$i]) $($v[$i])" | Out-Null }
+    }
+    Sh "rm /data/local/tmp/broom-speed-before.txt" | Out-Null
 }
 Sh "settings delete global private_dns_mode" | Out-Null
 Sh "settings delete global private_dns_specifier" | Out-Null

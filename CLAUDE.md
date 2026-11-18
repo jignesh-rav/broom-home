@@ -37,6 +37,8 @@ If either is missing, walk them through README Step 1 and wait for the IP. Don't
    - macOS / Linux / Git Bash: `bash scripts/install.sh <ip>`
 
    Then ask before rebooting: a restart frees the memory the switched-off apps used.
+
+   The installer also compiles Broom ahead of time and, unless `-NoSpeedTweaks` / `--no-speed-tweaks` is given, switches window animations off, halves app animations and makes held keys repeat after 300 ms (the TV's own values are saved in `/data/local/tmp/broom-speed-before.txt`; `undo` restores them). Mention this to the person before running the installer, and add the flag if they'd rather keep their TV's own settings.
 6. **Verify it worked:**
    - `adb -s <ip>:5555 shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME` should end with `com.broom.launcher/.MainActivity`
    - `adb -s <ip>:5555 shell settings get secure enabled_accessibility_services` should contain `com.broom.launcher/com.broom.launcher.KeyRemapService`
