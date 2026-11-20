@@ -27,7 +27,7 @@ Nothing here needs root or an account. Every change can be undone.
 - Festival decorations on the day: Diwali, Navratri, Uttarayan, Holi, Christmas, New Year, Independence / Republic Day and more
 
 **Screens**
-- **Briefing:** Indian, US and global indices, sector and stock trackers with 5-day charts, an editable watchlist, cricket and football scores, and news (Cricket, Football, Tech, AI, Space, Markets, plus a **Regional** tab with Hindi, Gujarati and Marathi headlines). It can open by itself on the first switch-on of the morning.
+- **Briefing:** Indian, US and global indices, sector and stock trackers with 5-day charts, editable India / US tech & AI / World watchlists, the day's biggest Nifty 500 and S&P 500 movers, cricket and football scores, and news (Cricket, Football, Tech, AI, Space, Markets, plus a **Regional** tab with Hindi, Gujarati and Marathi headlines). It can open by itself on the first switch-on of the morning.
 - **Weather:** now, warnings, a 3-day walk / jog planner that takes air quality into account, 24 h and 14-day forecasts
 - **Panchang:** tithi, nakshatra, yoga, karana, Choghadiya, Rahu Kaal, sunrise / sunset and upcoming festivals, worked out offline for your location, in English, हिन्दी, ગુજરાતી or मराठी
 - **Network monitor:** uptime, latency chart, outages, speed test

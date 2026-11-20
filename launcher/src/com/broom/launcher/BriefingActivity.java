@@ -184,7 +184,7 @@ public class BriefingActivity extends Activity {
         col.addView(jumpScroll, new LinearLayout.LayoutParams(-1, -2));
         java.util.List<String> names = new java.util.ArrayList<>();
         names.add("Summary");
-        if (mk) java.util.Collections.addAll(names, "Indices", "India sectors", "India stocks", "US tech & AI");
+        if (mk) java.util.Collections.addAll(names, "Indices", "India sectors", "India stocks", "Nifty 500 movers", "US tech & AI", "S&P 500 movers", "World");
         if (fb) names.add("Football");
         if (ck) names.add("Cricket");
         java.util.List<Integer> secs = new java.util.ArrayList<>(), langSecs = new java.util.ArrayList<>();
@@ -220,29 +220,17 @@ public class BriefingActivity extends Activity {
         }
 
         // ---------- trackers (compact cards, 5 per row) with top gainer / loser
-        String[] anchorFor = {"India sectors", "India sectors", "India stocks", "US tech & AI"};
+        String[] anchorFor = {"India sectors", "India sectors", "India stocks", "US tech & AI", "World"};
         for (int gi = Briefing.MAIN; mk && gi < Briefing.GROUPS.length; gi++) {
             List<Briefing.Quote> qs = Briefing.group(this, gi);
             View sec = section(Briefing.GROUPS[gi][0] + movers(qs));
             String an = anchorFor[gi - Briefing.MAIN];
             if (!anchors.containsKey(an)) anchors.put(an, sec);
-            if (qs.isEmpty()) { col.addView(Ui.text(this, "Loading…", 13, th.dim, th.bodyFont)); continue; }
-            LinearLayout r = null;
-            for (int i = 0; i < qs.size(); i++) {
-                if (i % 5 == 0) {
-                    r = row();
-                    r.setPadding(0, i == 0 ? 0 : Ui.dp(this, 10), 0, 0);
-                    col.addView(r);
-                }
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -2, 1);
-                lp.rightMargin = Ui.dp(this, 10);
-                r.addView(miniCard(qs.get(i)), lp);
-            }
-            for (int pad = qs.size() % 5; pad != 0 && pad < 5; pad++) {   // keep the last row's cards the same width
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, 1, 1);
-                lp.rightMargin = Ui.dp(this, 10);
-                r.addView(new View(this), lp);
-            }
+            if (qs.isEmpty()) col.addView(Ui.text(this, "Loading…", 13, th.dim, th.bodyFont));
+            else cards(qs);
+            // after each watchlist: the other big movers of that market (Nifty 500 / S&P 500, not already listed)
+            if (gi == Briefing.WL_INDIA) scanSection(Briefing.SCAN_IN, "Nifty 500 movers");
+            if (gi == Briefing.WL_US) scanSection(Briefing.SCAN_US, "S&P 500 movers");
         }
 
         // ---------- football scores
@@ -420,6 +408,43 @@ public class BriefingActivity extends Activity {
         return t;
     }
 
+    /** "India · Nifty 500 movers": 5 best then 5 worst of the scanned market, compact cards. */
+    private void scanSection(String mkt, String anchor) {
+        List<Briefing.Quote> ups = Briefing.scanMovers(this, mkt, true, 5), dns = Briefing.scanMovers(this, mkt, false, 5);
+        View sec = section(Briefing.scanTitle(mkt) + "     " + Briefing.scanList(this, mkt).size() + " stocks scanned, your lists left out");
+        anchors.put(anchor, sec);
+        if (ups.isEmpty() && dns.isEmpty()) { col.addView(Ui.text(this, "Scanning…", 13, th.dim, th.bodyFont)); return; }
+        TextView g = Ui.text(this, "Top gainers", 11, UP, "Poppins-Medium");
+        col.addView(g);
+        if (!ups.isEmpty()) cards(ups);
+        TextView l = Ui.text(this, "Top losers", 11, DOWN, "Poppins-Medium");
+        l.setPadding(0, Ui.dp(this, 10), 0, 0);
+        col.addView(l);
+        if (!dns.isEmpty()) cards(dns);
+    }
+
+    /** Compact quote cards, 5 per row, last row padded so cards keep the same width. */
+    private void cards(List<Briefing.Quote> qs) {
+        {
+            LinearLayout r = null;
+            for (int i = 0; i < qs.size(); i++) {
+                if (i % 5 == 0) {
+                    r = row();
+                    r.setPadding(0, i == 0 ? 0 : Ui.dp(this, 10), 0, 0);
+                    col.addView(r);
+                }
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -2, 1);
+                lp.rightMargin = Ui.dp(this, 10);
+                r.addView(miniCard(qs.get(i)), lp);
+            }
+            for (int pad = qs.size() % 5; pad != 0 && pad < 5; pad++) {   // keep the last row's cards the same width
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, 1, 1);
+                lp.rightMargin = Ui.dp(this, 10);
+                r.addView(new View(this), lp);
+            }
+        }
+    }
+
     /** Summary tab: key indices, today's best/worst movers, live cricket, top story per section. */
     private View summary(boolean mk, boolean ck) {
         View sec = section("Summary");
@@ -462,6 +487,26 @@ public class BriefingActivity extends Activity {
             TextView t = Ui.text(this, "", 13, th.text, "Poppins-Medium");
             t.setText(sb);
             mv.addView(t);
+            if (gi == Briefing.WL_INDIA || gi == Briefing.WL_US) {   // then the same market's wider scan
+                String mkt = gi == Briefing.WL_INDIA ? Briefing.SCAN_IN : Briefing.SCAN_US;
+                List<Briefing.Quote> u = Briefing.scanMovers(this, mkt, true, 1), d = Briefing.scanMovers(this, mkt, false, 1);
+                if (u.isEmpty() && d.isEmpty()) continue;
+                TextView g2 = Ui.text(this, Briefing.scanTitle(mkt), 11, th.dim, th.bodyFont);
+                g2.setPadding(0, Ui.dp(this, 8), 0, 0);
+                mv.addView(g2);
+                android.text.SpannableStringBuilder s2 = new android.text.SpannableStringBuilder();
+                for (Briefing.Quote q : new Briefing.Quote[]{u.isEmpty() ? null : u.get(0), d.isEmpty() ? null : d.get(0)}) {
+                    if (q == null) continue;
+                    if (s2.length() > 0) s2.append("     ");
+                    s2.append(q.name).append(" ");
+                    int st2 = s2.length();
+                    s2.append(String.format(java.util.Locale.US, "%+.1f%%", q.pct));
+                    s2.setSpan(new android.text.style.ForegroundColorSpan(q.pct >= 0 ? UP : DOWN), st2, s2.length(), 0);
+                }
+                TextView t2 = Ui.text(this, "", 13, th.text, "Poppins-Medium");
+                t2.setText(s2);
+                mv.addView(t2);
+            }
         }
         List<Briefing.Score> sc = Briefing.scores(this);
         if (!mk && sc.isEmpty()) mv.addView(Ui.text(this, "No international or IPL matches right now.", 13, th.dim, th.bodyFont));

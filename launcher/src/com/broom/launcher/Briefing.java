@@ -57,23 +57,45 @@ final class Briefing {
                     "POLICYBZR.NS", "PB Fintech", "JIOFIN.NS", "Jio Financial", "DIXON.NS", "Dixon", "POLYCAB.NS", "Polycab",
                     "PERSISTENT.NS", "Persistent", "KAYNES.NS", "Kaynes", "BSE.NS", "BSE", "CDSL.NS", "CDSL",
                     "MAZDOCK.NS", "Mazagon Dock", "SUZLON.NS", "Suzlon", "IRFC.NS", "IRFC", "INDIGO.NS", "IndiGo"},
-            {"US tech & AI stocks", "NVDA", "Nvidia", "AAPL", "Apple", "GOOGL", "Alphabet", "MSFT", "Microsoft", "AMZN", "Amazon",
+            {"US tech & AI stocks", "NVDA", "Nvidia", "ANT", "Anthropic", "AAPL", "Apple", "GOOGL", "Alphabet", "MSFT", "Microsoft", "AMZN", "Amazon",
                     "META", "Meta", "TSLA", "Tesla", "AVGO", "Broadcom", "AMD", "AMD", "TSM", "TSMC", "MU", "Micron",
                     "SNDK", "SanDisk", "CRWV", "CoreWeave", "000660.KS", "SK Hynix", "005930.KS", "Samsung", "ORCL", "Oracle",
-                    "PLTR", "Palantir", "ARM", "Arm", "ASML", "ASML", "INTC", "Intel"}};
+                    "PLTR", "Palantir", "ARM", "Arm", "ASML", "ASML", "INTC", "Intel"},
+            {"World · indices & stocks", "^STOXX50E", "Euro Stoxx 50", "^FCHI", "CAC 40", "^KS11", "KOSPI", "000001.SS", "Shanghai",
+                    "^TWII", "Taiwan", "^AXJO", "ASX 200", "^GSPTSE", "TSX Canada",
+                    "2330.TW", "TSMC (Taiwan)", "7203.T", "Toyota", "6758.T", "Sony", "8035.T", "Tokyo Electron", "9984.T", "SoftBank",
+                    "0700.HK", "Tencent", "9988.HK", "Alibaba", "1211.HK", "BYD", "SAP.DE", "SAP", "SIE.DE", "Siemens",
+                    "MC.PA", "LVMH", "RMS.PA", "Hermès", "NOVO-B.CO", "Novo Nordisk", "NESN.SW", "Nestlé", "SHEL.L", "Shell",
+                    "AZN.L", "AstraZeneca", "HSBA.L", "HSBC"}};
     /** GROUPS[0..MAIN-1] are the headline index groups; the rest are trackers. */
     static final int MAIN = 4;
-    static final int WL_INDIA = MAIN + 2, WL_US = MAIN + 3;
-    static final String[] DEFAULT_INDIA = GROUPS[WL_INDIA].clone(), DEFAULT_US = GROUPS[WL_US].clone();
+    static final int WL_INDIA = MAIN + 2, WL_US = MAIN + 3, WL_WORLD = MAIN + 4;
+    static final String[] DEFAULT_INDIA = GROUPS[WL_INDIA].clone(), DEFAULT_US = GROUPS[WL_US].clone(), DEFAULT_WORLD = GROUPS[WL_WORLD].clone();
     private static boolean listsLoaded;
 
     /** Apply the user's watchlists (saved as JSON [[sym,name],...]) over the defaults. */
     static synchronized void loadLists(Context c) {
         addNewDefaults(c, "wl_india", DEFAULT_INDIA, "ETERNAL.NS");
         addNewDefaults(c, "wl_us", DEFAULT_US, null);   // only makes sure Alphabet is there
+        addOnce(c, "wl_us", "wl_us_merged_v19", "ANT", "Anthropic", 1);
         GROUPS[WL_INDIA] = list(c, "wl_india", DEFAULT_INDIA);
         GROUPS[WL_US] = list(c, "wl_us", DEFAULT_US);
+        GROUPS[WL_WORLD] = list(c, "wl_world", DEFAULT_WORLD);
         listsLoaded = true;
+    }
+
+    /** One-time: put a new default stock into a saved (edited) list at position {@code at} unless it's there already. */
+    private static void addOnce(Context c, String key, String flag, String sym, String name, int at) {
+        android.content.SharedPreferences p = Theme.prefs(c);
+        String js = p.getString(key, null);
+        if (js == null || p.getBoolean(flag, false)) return;
+        try {
+            JSONArray a = new JSONArray(js), out = new JSONArray();
+            for (int i = 0; i < a.length(); i++) if (sym.equals(a.getJSONArray(i).getString(0))) { p.edit().putBoolean(flag, true).apply(); return; }
+            for (int i = 0; i < a.length(); i++) { if (i == at) out.put(new JSONArray().put(sym).put(name)); out.put(a.get(i)); }
+            if (a.length() <= at) out.put(new JSONArray().put(sym).put(name));
+            p.edit().putString(key, out.toString()).putBoolean(flag, true).apply();
+        } catch (Exception ignored) { }
     }
 
     /**
@@ -119,8 +141,14 @@ final class Briefing {
         file(c, "markets").setLastModified(0);   // refetch with the new symbols
     }
 
+    /** Watchlists or scan extras were changed from outside (Console restore): reload and refetch. */
+    static void listsChanged(Context c) {
+        loadLists(c);
+        for (String n : new String[]{"markets", "scan_" + SCAN_IN, "scan_" + SCAN_US}) if (file(c, n).exists()) file(c, n).setLastModified(0);
+    }
+
     static void resetLists(Context c) {
-        Theme.prefs(c).edit().remove("wl_india").remove("wl_us").apply();
+        Theme.prefs(c).edit().remove("wl_india").remove("wl_us").remove("wl_world").apply();
         loadLists(c);
         file(c, "markets").setLastModified(0);
     }
@@ -139,6 +167,125 @@ final class Briefing {
         boolean usNight = dow >= Calendar.TUESDAY && dow <= Calendar.SATURDAY && mins <= 2 * 60 + 40;  // US close after midnight IST
         return asia || india || europe || usEvening || usNight;
     }
+
+    /** NSE session (IST, weekdays, with a few minutes either side for the delayed feed). */
+    static boolean indiaSession() {
+        Calendar k = Calendar.getInstance(java.util.TimeZone.getTimeZone("Asia/Kolkata"));
+        int dow = k.get(Calendar.DAY_OF_WEEK), mins = k.get(Calendar.HOUR_OF_DAY) * 60 + k.get(Calendar.MINUTE);
+        return dow >= Calendar.MONDAY && dow <= Calendar.FRIDAY && mins >= 9 * 60 + 10 && mins <= 15 * 60 + 40;
+    }
+
+    /** US regular session as seen from India (19:00 / 20:00 IST until about 2:30 IST). */
+    static boolean usSession() {
+        Calendar k = Calendar.getInstance(java.util.TimeZone.getTimeZone("Asia/Kolkata"));
+        int dow = k.get(Calendar.DAY_OF_WEEK), mins = k.get(Calendar.HOUR_OF_DAY) * 60 + k.get(Calendar.MINUTE);
+        return (dow >= Calendar.MONDAY && dow <= Calendar.FRIDAY && mins >= 18 * 60 + 55)
+                || (dow >= Calendar.TUESDAY && dow <= Calendar.SATURDAY && mins <= 2 * 60 + 40);
+    }
+
+    // ------------------------------------------------------------------ movers scan (Nifty 500 / S&P 500)
+    /** Scan universes: "in" = Nifty 500, "us" = S&P 500 (assets/scan.json) plus the user's extra symbols. */
+    static final String SCAN_IN = "in", SCAN_US = "us";
+    private static JSONObject scanAsset;
+
+    private static synchronized JSONObject scanAsset(Context c) {
+        if (scanAsset == null) {
+            try (InputStream in = c.getAssets().open("scan.json")) { scanAsset = new JSONObject(new String(readAll(in), "UTF-8")); }
+            catch (Exception e) { scanAsset = new JSONObject(); }
+        }
+        return scanAsset;
+    }
+
+    /** [[sym,name],...] to scan for one market: bundled list + extras (prefs scan_in_extra / scan_us_extra). */
+    static List<String[]> scanList(Context c, String mkt) {
+        List<String[]> out = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        try {
+            JSONArray x = new JSONArray(Theme.prefs(c).getString("scan_" + mkt + "_extra", "[]"));
+            for (int i = 0; i < x.length(); i++) {
+                String s = x.getJSONArray(i).getString(0);
+                if (seen.add(s)) out.add(new String[]{s, x.getJSONArray(i).getString(1)});
+            }
+        } catch (Exception ignored) { }
+        JSONArray a = scanAsset(c).optJSONArray(mkt);
+        for (int i = 0; a != null && i < a.length(); i++) {
+            JSONArray r = a.optJSONArray(i);
+            if (r != null && seen.add(r.optString(0))) out.add(new String[]{r.optString(0), r.optString(1)});
+        }
+        return out;
+    }
+
+    static int scanExtraCount(Context c, String mkt) {
+        try { return new JSONArray(Theme.prefs(c).getString("scan_" + mkt + "_extra", "[]")).length(); } catch (Exception e) { return 0; }
+    }
+
+    /** Every 15 min while that market trades; otherwise every 3 h (picks up the closing prices once). */
+    private static void fetchScanIfStale(Context c, String mkt) {
+        boolean open = SCAN_IN.equals(mkt) ? indiaSession() : usSession();
+        if (!stale(c, "scan_" + mkt, open ? 15 * 60000L : 3 * 60 * 60000L)) return;
+        Set<String> tracked = trackedSymbols();
+        List<String> syms = new ArrayList<>();
+        for (String[] s : scanList(c, mkt)) if (!tracked.contains(s[0])) syms.add(s[0]);
+        JSONObject out = new JSONObject();
+        for (int from = 0; from < syms.size(); from += 20) {
+            StringBuilder b = new StringBuilder();
+            for (int k = from; k < Math.min(syms.size(), from + 20); k++) { if (b.length() > 0) b.append(','); b.append(enc(syms.get(k))); }
+            try {
+                JSONArray r = new JSONObject(get("https://query1.finance.yahoo.com/v7/finance/spark?symbols=" + b + "&range=1d&interval=1d"))
+                        .getJSONObject("spark").getJSONArray("result");
+                for (int i = 0; i < r.length(); i++) {
+                    JSONObject m = r.getJSONObject(i).getJSONArray("response").getJSONObject(0).getJSONObject("meta");
+                    double p = m.optDouble("regularMarketPrice"), pv = m.has("previousClose") ? m.optDouble("previousClose") : m.optDouble("chartPreviousClose");
+                    if (!(p > 0) || !(pv > 0)) continue;
+                    out.put(r.getJSONObject(i).getString("symbol"), new JSONArray().put(p).put(pv).put(m.optLong("regularMarketTime")));
+                }
+            } catch (Exception ignored) { }
+            try { Thread.sleep(150); } catch (InterruptedException ignored) { }
+        }
+        try {
+            if (out.length() > 0) write(c, "scan_" + mkt, out.toString());
+            else if (file(c, "scan_" + mkt).exists()) file(c, "scan_" + mkt).setLastModified(System.currentTimeMillis());   // back off, keep old data
+            else write(c, "scan_" + mkt, "{}");
+        } catch (Exception ignored) { }
+    }
+
+    private static Set<String> trackedSymbols() {
+        Set<String> s = new HashSet<>();
+        for (String[] g : GROUPS) for (int i = 1; i < g.length; i += 2) s.add(g[i]);
+        return s;
+    }
+
+    /**
+     * Biggest movers in a scan universe that aren't already in a tracker list: the {@code n} best ({@code up})
+     * or worst, by % change. Quotes older than 4 days (suspended / delisted) are left out.
+     */
+    static List<Quote> scanMovers(Context c, String mkt, boolean up, int n) {
+        ensureLists(c);
+        List<Quote> all = new ArrayList<>();
+        if (!Features.on(c, Features.MARKETS)) return all;
+        try {
+            JSONObject o = new JSONObject(read(c, "scan_" + mkt));
+            Set<String> tracked = trackedSymbols();
+            long now = System.currentTimeMillis();
+            for (String[] s : scanList(c, mkt)) {
+                JSONArray q = o.optJSONArray(s[0]);
+                if (q == null || tracked.contains(s[0])) continue;
+                Quote x = new Quote();
+                x.sym = s[0]; x.name = s[1];
+                x.price = q.getDouble(0); x.prev = q.getDouble(1); x.time = q.getLong(2) * 1000L;
+                x.cur = SCAN_IN.equals(mkt) ? "INR" : "USD";
+                x.pct = (x.price - x.prev) / x.prev * 100;
+                if (now - x.time < 4 * 86400000L) all.add(x);
+            }
+        } catch (Exception ignored) { }
+        final int sign = up ? -1 : 1;
+        Collections.sort(all, new Comparator<Quote>() { @Override public int compare(Quote a, Quote b) { return sign * Double.compare(a.pct, b.pct); } });
+        List<Quote> out = new ArrayList<>();
+        for (Quote q : all) { if (out.size() >= n || (up ? q.pct <= 0 : q.pct >= 0)) break; out.add(q); }
+        return out;
+    }
+
+    static String scanTitle(String mkt) { return SCAN_IN.equals(mkt) ? "India · Nifty 500 movers" : "US · S&P 500 movers"; }
 
     /** How old market data may get: 5 min while something is trading, 1 h otherwise. */
     static long marketsMaxAge() { return marketsOpen() ? 5 * 60000L : 60 * 60000L; }
@@ -301,6 +448,7 @@ final class Briefing {
             @Override public void run() {
                 ensureLists(c);
                 if (Features.on(c, Features.MARKETS)) try { if (stale(c, "markets", marketsMaxAge())) fetchMarkets(c); } catch (Exception ignored) { failed(c, "markets"); }
+                if (Features.on(c, Features.MARKETS)) { fetchScanIfStale(c, SCAN_IN); fetchScanIfStale(c, SCAN_US); }
                 if (Features.on(c, Features.CRICKET)) try { if (stale(c, "scores", 3 * 60000)) fetchScores(c); } catch (Exception ignored) { }
                 if (Features.on(c, Features.FOOTBALL)) try { if (stale(c, "football", footballLive(c) ? 3 * 60000 : 30 * 60000)) fetchFootballNow(c); } catch (Exception ignored) { }
                 if (news && Features.anyNews(c)) try {
@@ -525,10 +673,16 @@ final class Briefing {
     // ------------------------------------------------------------------ formatting
     static String price(Quote q) {
         if (q.sym.equals("USDINR=X")) return String.format(Locale.US, "₹%.2f", q.price);
-        boolean stock = !q.sym.startsWith("^") && !q.sym.contains("NIFTY_") && !q.sym.contains("=");
+        boolean stock = !q.sym.startsWith("^") && !q.sym.contains("NIFTY_") && !q.sym.contains("=") && !q.sym.equals("000001.SS");
         if (stock && q.cur.equals("INR")) return "₹" + String.format(new Locale("en", "IN"), q.price >= 1000 ? "%,.0f" : "%,.2f", q.price);
         if (stock && q.cur.equals("USD")) return "$" + String.format(Locale.US, "%,.2f", q.price);
         if (q.cur.equals("KRW")) return "₩" + String.format(Locale.US, "%,.0f", q.price);
+        if (stock) {   // world stocks in their own currency
+            String sym = q.cur.equals("JPY") ? "¥" : q.cur.equals("EUR") ? "€" : q.cur.equals("HKD") ? "HK$" : q.cur.equals("TWD") ? "NT$"
+                    : q.cur.equals("CHF") ? "CHF " : q.cur.equals("DKK") ? "kr " : q.cur.equals("GBP") ? "£" : q.cur.equals("CNY") ? "¥" : "";
+            if (q.cur.equals("GBp")) return String.format(Locale.US, "%,.0fp", q.price);
+            if (!sym.isEmpty()) return sym + String.format(Locale.US, q.price >= 1000 ? "%,.0f" : "%,.2f", q.price);
+        }
         if (q.price >= 1000) return String.format(new Locale("en", "IN"), "%,.0f", q.price);
         return String.format(new Locale("en", "IN"), "%,.2f", q.price);
     }
@@ -624,6 +778,14 @@ final class Briefing {
             while ((n = in.read(buf)) > 0) b.write(buf, 0, n);
             return b.toString("UTF-8");
         } finally { con.disconnect(); }
+    }
+
+    private static byte[] readAll(InputStream in) throws Exception {
+        ByteArrayOutputStream b = new ByteArrayOutputStream();
+        byte[] buf = new byte[8192];
+        int n;
+        while ((n = in.read(buf)) > 0) b.write(buf, 0, n);
+        return b.toByteArray();
     }
 
     private static void write(Context c, String name, String s) throws Exception {

@@ -136,7 +136,13 @@ ol.favs li button:hover { color: var(--ink); }
 
   <section id="watch" hidden>
     <p class="muted small">One stock per line: <code>SYMBOL, Name</code>. Indian stocks end in <code>.NS</code>
-      (NSE) or <code>.BO</code> (BSE), for example <code>TCS.NS, TCS</code>. US stocks are just the ticker, like <code>NVDA, Nvidia</code>.</p>
+      (NSE) or <code>.BO</code> (BSE), for example <code>TCS.NS, TCS</code>. US stocks are just the ticker, like <code>NVDA, Nvidia</code>.
+      Other markets use Yahoo's suffix: <code>7203.T</code> Tokyo, <code>0700.HK</code> Hong Kong, <code>SAP.DE</code> Germany,
+      <code>SHEL.L</code> London; indices start with <code>^</code>.</p>
+    <p class="muted small"><b>How the categories show:</b> each watchlist is shown in full in Briefing; the screensaver fits 20, so a
+      longer list shows its 20 biggest moves. Broom also scans the Nifty 500 and S&amp;P 500 (every 15 min while that market trades)
+      and shows the top gainers and losers that aren't already in your lists. Add stocks outside those indices under
+      <i>Extra stocks to scan</i>.</p>
     <div class="cols" id="watchCols"></div>
   </section>
 
@@ -468,6 +474,7 @@ function renderFavs() {
 }
 
 // ------------------------------------------------------------------ watchlist
+const WL_KEYS = ["india", "us", "world", "scan_in", "scan_us"];
 const toText = (rows) => rows.map((r) => r[0] + ", " + r[1]).join("\n");
 function parseList(text) {
   const out = [];
@@ -484,16 +491,35 @@ function renderWatch() {
     const b = (S.status[t.id] || {}).broom;
     const card = el("div", { class: "card" }, el("h2", {}, t.name));
     if (!b) { card.append(el("p", { class: "muted small" }, "Needs the TV reachable and Broom 18.3 or newer.")); return card; }
-    if (!S.wl[t.id]) S.wl[t.id] = { india: toText(b.watchlists.india), us: toText(b.watchlists.us), orig: { india: toText(b.watchlists.india), us: toText(b.watchlists.us) } };
-    const w = S.wl[t.id];
-    for (const [k, title] of [["india", "India stocks"], ["us", "US tech & AI stocks"]]) {
-      const ta = el("textarea", { "aria-label": title + " on " + t.name, spellcheck: "false" });
+    if (!S.wl[t.id]) {
+      const sc = b.scan || {}, wl = b.watchlists || {};
+      const src = { india: wl.india || [], us: wl.us || [], world: wl.world || [],
+                    scan_in: (sc.in || {}).extra || [], scan_us: (sc.us || {}).extra || [] };
+      const w0 = { orig: {}, has: { world: !!wl.world, scan: !!b.scan } };
+      for (const k of WL_KEYS) { w0[k] = toText(src[k]); w0.orig[k] = w0[k]; }
+      S.wl[t.id] = w0;
+    }
+    const w = S.wl[t.id], sc = b.scan || {};
+    const rows = [["india", "India · top stocks", "watchlist"], ["us", "US tech & AI stocks", "watchlist"],
+                  ["world", "World · indices & stocks", "watchlist"],
+                  ["scan_in", "Extra India stocks to scan (beyond the Nifty 500)", "scan", (sc.in || {}).total],
+                  ["scan_us", "Extra US stocks to scan (beyond the S&P 500)", "scan", (sc.us || {}).total]];
+    for (const [k, title, kind, total] of rows) {
+      if (k === "world" && !w.has.world || kind === "scan" && !w.has.scan) {
+        card.append(el("p", { class: "muted small", style: "margin:12px 0 4px" }, el("b", {}, title), " needs Broom 18.8 or newer on this TV."));
+        continue;
+      }
+      const ta = el("textarea", { "aria-label": title + " on " + t.name, spellcheck: "false",
+                                  placeholder: k === "scan_in" ? "e.g.\nTATAPOWER.NS, Tata Power" : k === "scan_us" ? "e.g.\nRDDT, Reddit" : "" });
+      if (kind === "scan") ta.style.minHeight = "110px";
       ta.value = w[k];
       ta.addEventListener("input", () => { w[k] = ta.value; updateBar(); });
-      card.append(el("p", { class: "small", style: "margin:12px 0 4px" }, el("b", {}, title), " ", el("span", { class: "muted" }, parseList(w[k]).length + " stocks")), ta);
+      const n = parseList(w[k]).length;
+      const note = kind === "scan" ? n + " extra" + (total ? " · " + total + " scanned in all" : "") : n + " stocks";
+      card.append(el("p", { class: "small", style: "margin:12px 0 4px" }, el("b", {}, title), " ", el("span", { class: "muted" }, note)), ta);
     }
-    if (S.tvs.length > 1) card.append(el("div", { class: "actions" }, btn("Copy both lists to the other TVs", () => {
-      S.tvs.forEach((o) => { if (o.id !== t.id && S.wl[o.id]) { S.wl[o.id].india = w.india; S.wl[o.id].us = w.us; } }); renderWatch(); updateBar();
+    if (S.tvs.length > 1) card.append(el("div", { class: "actions" }, btn("Copy all lists to the other TVs", () => {
+      S.tvs.forEach((o) => { if (o.id !== t.id && S.wl[o.id]) for (const k of WL_KEYS) S.wl[o.id][k] = w[k]; }); renderWatch(); updateBar();
     })));
     return card;
   });
@@ -506,8 +532,8 @@ function changes() {
   const put = (id, k, v) => { (out[id] = out[id] || {})[k] = v; };
   for (const [id, p] of Object.entries(S.pending)) for (const [k, v] of Object.entries(p)) put(id, k, v);
   for (const [id, f] of Object.entries(S.favs)) if (f.list.join(",") !== f.orig) put(id, "favs", f.list);
-  for (const [id, w] of Object.entries(S.wl)) for (const k of ["india", "us"])
-    if (w[k].trim() !== w.orig[k].trim()) put(id, "wl_" + k, parseList(w[k]));
+  for (const [id, w] of Object.entries(S.wl)) for (const k of WL_KEYS)
+    if (w[k].trim() !== w.orig[k].trim()) put(id, k.startsWith("scan_") ? k + "_extra" : "wl_" + k, parseList(w[k]));
   return out;
 }
 function updateBar() {

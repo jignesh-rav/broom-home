@@ -43,11 +43,13 @@ Festival decorations appear by themselves on the day: Diwali diyas, Navratri gar
 ## Briefing
 
 Opens from the button, from the ticker, or by itself on the first switch-on between 6 and 10 AM. Switch that last one off with the **Morning briefing** button on the screen.
-- **Jump buttons** at the top: Summary · Indices · India sectors · India stocks · US tech & AI · Football · Cricket · News
+- **Jump buttons** at the top: Summary · Indices · India sectors · India stocks · Nifty 500 movers · US tech & AI · S&P 500 movers · World · Football · Cricket · News
 - The page moves to the next tab every 2 minutes. Pressing any key pauses that for 2 minutes
 - Every stock card shows price, % change and a 5-day mini chart. Each tracker shows its best and worst mover
 - Market data is delayed about 15 minutes. It refreshes every 5 minutes while a market is open and hourly otherwise
-- **Default lists:** India: large caps (Reliance, HDFC Bank, TCS, HAL, BEL…) plus the most-followed mid / small caps and new-age stocks (Eternal, Trent, Swiggy, Paytm, PB Fintech, Jio Financial, Dixon, Polycab, Persistent, Kaynes, BSE, CDSL, Mazagon Dock, Suzlon, IRFC, IndiGo). US tech & AI: Nvidia, Apple, Alphabet, Microsoft, Amazon, Meta, Tesla, Broadcom, AMD, TSMC and more. When a list is longer than 20, the Briefing screensaver page shows its 20 biggest movers
+- **Default lists:** India: large caps (Reliance, HDFC Bank, TCS, HAL, BEL…) plus the most-followed mid / small caps and new-age stocks (Eternal, Trent, Swiggy, Paytm, PB Fintech, Jio Financial, Dixon, Polycab, Persistent, Kaynes, BSE, CDSL, Mazagon Dock, Suzlon, IRFC, IndiGo). US tech & AI: Nvidia, Anthropic, Apple, Alphabet, Microsoft, Amazon, Meta, Tesla, Broadcom, AMD, TSMC and more. World: Euro Stoxx 50, CAC 40, KOSPI, Shanghai, Taiwan, ASX 200, TSX and big non-US / non-Indian stocks (Toyota, Sony, TSMC, Tencent, Alibaba, BYD, SAP, LVMH, Novo Nordisk, Shell, HSBC…). When a list is longer than 20, the Briefing screensaver page shows its 20 biggest movers
+- **Movers scan:** Broom also checks the whole Nifty 500 and S&P 500 (every 15 minutes while that market trades, every 3 hours otherwise) and shows the biggest gainers and losers that aren't already in your lists: 5 + 5 in Briefing, 10 + 10 on their own screensaver page. Stocks outside those indices can be added to the scan from Broom Console
+- **Screensaver market pages,** in order: indices, India top stocks, Nifty 500 movers, US tech & AI, S&P 500 movers, World. India pages rest during the US session and US pages during Indian hours
 - **Watchlist**: add a stock (search by name or symbol), remove it, move it up or down, rename it, or reset to the defaults. New default stocks are added to an edited watchlist once, after an update. Set alerts for an index moving 1%+ or a stock moving 5%+. Alerts pop up over any app during market hours
 - **Customise**: the same Features tick-list as in Settings
 - **Refresh**: fetch everything now

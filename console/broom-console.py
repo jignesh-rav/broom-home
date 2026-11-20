@@ -484,9 +484,11 @@ def coerce(key, value):
         if not isinstance(value, list) or not 1 <= len(value) <= 40 or not all(isinstance(p, str) and PKG_RE.match(p) for p in value):
             raise Fail("Favourites: expected 1 to 40 app package names")
         return {"t": "s", "v": ",".join(dict.fromkeys(value))}
-    if key in ("wl_india", "wl_us"):
-        if not isinstance(value, list) or not 1 <= len(value) <= 60:
-            raise Fail("Watchlist: expected 1 to 60 stocks")
+    if key in ("wl_india", "wl_us", "wl_world", "scan_in_extra", "scan_us_extra"):
+        scan = key.startswith("scan_")
+        lo, hi = (0, 300) if scan else (1, 60)
+        if not isinstance(value, list) or not lo <= len(value) <= hi:
+            raise Fail("Extra stocks to scan: at most 300" if scan else "Watchlist: expected 1 to 60 stocks")
         rows = []
         for it in value:
             if not (isinstance(it, list) and len(it) == 2 and isinstance(it[0], str) and SYM_RE.match(it[0].strip())

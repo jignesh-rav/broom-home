@@ -73,7 +73,10 @@ public class BackupReceiver extends BroadcastReceiver {
                     else if (t.equals("f")) ed.putFloat(k, Float.parseFloat(v));
                     else ed.putString(k, v);
                 }
-                ed.remove("wx_time").apply();
+                ed.remove("wx_time").commit();
+                boolean lists = false;
+                for (Iterator<String> it = o.keys(); it.hasNext(); ) { String k = it.next(); if (k.startsWith("wl_") || k.startsWith("scan_")) lists = true; }
+                if (lists) Briefing.listsChanged(c);   // new stocks show at the next refresh
                 setResultData("restored " + o.length() + " settings");
             } else setResultData("unknown action");   // never fall through to RESTORE
         } catch (Exception e) { setResultData("error: " + e); }
@@ -130,15 +133,22 @@ public class BackupReceiver extends BroadcastReceiver {
         o.put("favs", fa).put("favs_default", favs == null);
         Briefing.loadLists(c);
         JSONObject wl = new JSONObject();
-        int[] idx = {Briefing.WL_INDIA, Briefing.WL_US};
-        String[] names = {"india", "us"};
-        for (int k = 0; k < 2; k++) {
+        int[] idx = {Briefing.WL_INDIA, Briefing.WL_US, Briefing.WL_WORLD};
+        String[] names = {"india", "us", "world"};
+        for (int k = 0; k < idx.length; k++) {
             String[] g = Briefing.GROUPS[idx[k]];
             org.json.JSONArray a = new org.json.JSONArray();
             for (int j = 1; j + 1 < g.length; j += 2) a.put(new org.json.JSONArray().put(g[j]).put(g[j + 1]));
             wl.put(names[k], a);
         }
         o.put("watchlists", wl);
+        JSONObject scan = new JSONObject();
+        for (String m : new String[]{Briefing.SCAN_IN, Briefing.SCAN_US}) {
+            org.json.JSONArray ex;
+            try { ex = new org.json.JSONArray(Theme.prefs(c).getString("scan_" + m + "_extra", "[]")); } catch (Exception e) { ex = new org.json.JSONArray(); }
+            scan.put(m, new JSONObject().put("extra", ex).put("total", Briefing.scanList(c, m).size()));
+        }
+        o.put("scan", scan);
         return o;
     }
 }

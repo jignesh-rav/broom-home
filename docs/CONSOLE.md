@@ -26,7 +26,7 @@ On Windows you can also double-click `console\broom-console.cmd`. The page opens
 
 **Favourites:** the home screen's Favourites row on each TV. Reorder, remove, add from that TV's installed apps, or copy one TV's order to the others. Apps a TV doesn't have are struck through, and Broom skips them on that TV.
 
-**Watchlist:** the India and US stock lists, one `SYMBOL, Name` per line, per TV, with **Copy both lists to the other TVs**.
+**Watchlist:** the India, US tech & AI and World lists, plus extra India and US stocks to scan for movers beyond the Nifty 500 / S&P 500, one `SYMBOL, Name` per line, per TV, with **Copy all lists to the other TVs**. World lists and scan extras need Broom 18.8 or newer.
 
 **Backups:** save a TV's Broom settings to this computer (`console/data/backups/<tv>/`) and restore them later. A backup only restores to the TV it came from; use the Settings tab to copy settings between TVs.
 

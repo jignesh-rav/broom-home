@@ -628,12 +628,20 @@ public class DreamView extends FrameLayout {
 
         private final boolean fixed;
 
-        /** Pages: 0-2 markets, 3 cricket, 4 football · AI, 5 space · market news, 6 Panchang. Skips switched-off ones. */
+        /**
+         * Pages: 0 indices, 1 India top stocks, 7 Nifty 500 movers, 2 US tech, 8 S&P 500 movers, 9 world indices & stocks,
+         * 3 cricket, 4 football · AI, 5 space · market news, 6 Panchang. Shown in ORDER; switched-off ones are skipped.
+         */
+        private final int[] ORDER = {0, 1, 7, 2, 8, 9, 3, 4, 5, 6};
+
         private boolean pageOn(int p) {
             Context c = getContext();
+            boolean mk = Features.on(c, Features.MARKETS) && Briefing.marketsOpen();
             switch (p) {
-                // market pages only while an Indian or US market is trading; otherwise just scores and news
-                case 0: case 1: case 2: return Features.on(c, Features.MARKETS) && Briefing.marketsOpen();
+                // market pages only while a market we track is trading; India pages rest during the US session and vice versa
+                case 0: case 9: return mk;
+                case 1: case 7: return mk && !Briefing.usSession();
+                case 2: case 8: return mk && !Briefing.indiaSession();
                 case 3: return Features.on(c, Features.CRICKET) || Features.news(c, "cricket");
                 case 4: return Features.news(c, "football") || Features.news(c, "ai");
                 case 5: return Features.news(c, "space") || Features.news(c, "markets");
@@ -642,7 +650,9 @@ public class DreamView extends FrameLayout {
         }
 
         private int nextPage(int p) {
-            for (int i = 1; i <= 7; i++) if (pageOn((p + i) % 7)) return (p + i) % 7;
+            int at = 0;
+            for (int i = 0; i < ORDER.length; i++) if (ORDER[i] == p) at = i;
+            for (int i = 1; i <= ORDER.length; i++) { int q = ORDER[(at + i) % ORDER.length]; if (pageOn(q)) return q; }
             return p;
         }
 
@@ -681,15 +691,40 @@ public class DreamView extends FrameLayout {
         @Override protected void onDraw(Canvas c) {
             int w = getWidth(), h = getHeight();
             float x = w * 0.06f, y = h * 0.12f;
-            String[] titles = {"MARKETS", "INDIA STOCKS", "US TECH & AI STOCKS", "CRICKET", "FOOTBALL  ·  AI", "SPACE  ·  MARKET NEWS", "PANCHANG"};
+            String[] titles = {"MARKETS", "INDIA · TOP STOCKS", "US TECH & AI STOCKS", "CRICKET", "FOOTBALL  ·  AI", "SPACE  ·  MARKET NEWS", "PANCHANG",
+                    "INDIA · NIFTY 500 MOVERS", "US · S&P 500 MOVERS", "WORLD · INDICES & STOCKS"};
             Context cx0 = getContext();
             if (page == 4) titles[4] = join(Features.news(cx0, "football") ? "FOOTBALL" : null, Features.news(cx0, "ai") ? "AI" : null);
             if (page == 5) titles[5] = join(Features.news(cx0, "space") ? "SPACE" : null, Features.news(cx0, "markets") ? "MARKET NEWS" : null);
             if (page == 6) titles[6] = PanchangLang.pick(Lang.panchang(cx0), "PANCHANG", "पंचांग", "પંચાંગ", "पंचांग");
             text(c, titles[page], x, y, h * 0.03f, Ui.lighten(theme.accent | 0xFF000000, 0.45f), "Poppins-SemiBold");
             y += h * 0.07f;
-            if (page == 1 || page == 2) {
-                java.util.List<Briefing.Quote> qs = Briefing.group(getContext(), page == 1 ? Briefing.MAIN + 2 : Briefing.MAIN + 3);
+            if (page == 7 || page == 8) {   // movers outside the user's lists: 10 gainers left, 10 losers right
+                String mkt = page == 7 ? Briefing.SCAN_IN : Briefing.SCAN_US;
+                java.util.List<Briefing.Quote> ups = Briefing.scanMovers(getContext(), mkt, true, 10), dns = Briefing.scanMovers(getContext(), mkt, false, 10);
+                if (ups.isEmpty() && dns.isEmpty()) { text(c, "Scanning " + (page == 7 ? "Nifty 500" : "S&P 500") + "…", x, y, h * 0.035f, 0xCCFFFFFF, "Poppins-Light"); return; }
+                float colW = w * 0.17f;
+                text(c, "▲ TOP GAINERS", x, y - h * 0.015f, h * 0.02f, 0xFF4CD964, "Poppins-SemiBold");
+                text(c, "▼ TOP LOSERS", x + 2 * colW + w * 0.03f, y - h * 0.015f, h * 0.02f, 0xFFFF6B6B, "Poppins-SemiBold");
+                y += h * 0.03f;
+                for (int side = 0; side < 2; side++) {
+                    java.util.List<Briefing.Quote> l = side == 0 ? ups : dns;
+                    for (int i = 0; i < l.size(); i++) {
+                        Briefing.Quote q = l.get(i);
+                        float cx = x + side * (2 * colW + w * 0.03f) + (i % 2) * colW, cy = y + (i / 2) * h * 0.145f;
+                        tp.setTextSize(h * 0.022f);
+                        text(c, android.text.TextUtils.ellipsize(q.name, tp, colW * 0.92f, android.text.TextUtils.TruncateAt.END).toString(),
+                                cx, cy, h * 0.022f, 0xCCFFFFFF, "Poppins-Regular");
+                        text(c, Briefing.price(q), cx, cy + h * 0.042f, h * 0.032f, 0xFFFFFFFF, "Poppins-SemiBold");
+                        text(c, Briefing.change(q), cx, cy + h * 0.074f, h * 0.022f, q.up() ? 0xFF4CD964 : 0xFFFF6B6B, "Poppins-SemiBold");
+                    }
+                }
+                text(c, "Stocks not already in your lists · " + Briefing.scanList(getContext(), mkt).size() + " scanned · Delayed · Yahoo Finance",
+                        x, h * 0.95f, h * 0.02f, 0x99FFFFFF, "Poppins-Light");
+                return;
+            }
+            if (page == 1 || page == 2 || page == 9) {
+                java.util.List<Briefing.Quote> qs = Briefing.group(getContext(), page == 1 ? Briefing.WL_INDIA : page == 2 ? Briefing.WL_US : Briefing.WL_WORLD);
                 if (qs.isEmpty()) { text(c, "Loading…", x, y, h * 0.035f, 0xCCFFFFFF, "Poppins-Light"); return; }
                 if (qs.size() > 20) {   // only 20 fit: show the biggest movers, so nothing important is cut off by list order
                     qs = new java.util.ArrayList<>(qs);
